@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Group - Predator Monitoring{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-12 col-lg-8 col-xl-7">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-body p-4 p-lg-5">
+                <div class="text-center mb-4">
+                    <h1 class="h2 mb-2">Choose Your Group</h1>
+                    <p class="text-muted mb-0">Your account belongs to more than one active group. Select the group you want to work with for this session.</p>
+                </div>
+                <form method="POST" action="{{ url_for('choose_group') }}">
+                    <div class="d-grid gap-3 mb-4">
+                        {% for group in groups %}
+                        <label class="card border h-100 shadow-sm group-option">
+                            <div class="card-body p-3 p-md-4">
+                                <div class="d-flex align-items-start gap-3">
+                                    <input
+                                        class="form-check-input mt-1"
+                                        type="radio"
+                                        name="group_id"
+                                        id="group-{{ group.group_id }}"
+                                        value="{{ group.group_id }}"
+                                        {% if (session.get('group_id') and session.get('group_id')|int == group.group_id) or (not session.get('group_id') and loop.first) %}checked{% endif %}
+                                        required
+                                    >
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                            <div>
+                                                <h2 class="h5 mb-1">{{ group.name }}</h2>
+                                                {% if group.charitable_name %}
+                                                <p class="text-muted mb-0">{{ group.charitable_name }}</p>
+                                                {% endif %}
+                                            </div>
+                                            {% if group.coordinators_names %}
+                                            <div class="text-end small text-muted mt-1">
+                                                <span class="d-block text-dark fw-semibold" style="font-size: 0.8rem; text-transform: uppercase;">Coordinator</span>
+                                                <span>{{ group.coordinators_names }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if group.description %}
+                                        <p class="mb-3">{{ group.description }}</p>
+                                        {% endif %}
+
+                                        <div class="row g-3 small text-muted">
+                                            <div class="col-sm-6">
+                                                <span class="fw-semibold text-dark d-block">Registration Number</span>
+                                                <span>{{ group.charity_registration_number or 'Not provided' }}</span>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <span class="fw-semibold text-dark d-block">Visibility</span>
+                                                <span>{{ 'Public' if group.is_public else 'Private' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Log Out</a>
+                        <button type="submit" class="btn btn-primary px-4">Continue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .group-option {
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .group-option:hover {
+        transform: translateY(-2px);
+        border-color: rgba(46, 125, 50, 0.35);
+        box-shadow: 0 0.75rem 1.5rem rgba(27, 94, 32, 0.12);
+    }
+
+    .group-option:has(input:checked) {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.18rem rgba(46, 125, 50, 0.12);
+    }
+
+    .group-option .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .group-option .card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

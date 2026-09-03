@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Observation - Predator Monitoring{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Edit Observation</h1>
+            <a class="btn btn-outline-success" href="{{ url_for('operator_dashboard') }}">Back to Dashboard</a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="line_id" class="form-label">Associated Trap Line (Optional)</label>
+                        <select class="form-select" id="line_id" name="line_id">
+                            <option value="">-- Not associated with a line --</option>
+                            {% for line in assigned_lines %}
+                            <option value="{{ line.line_id }}" {% if observation.line_id == line.line_id %}selected{% endif %}>
+                                {{ line.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date_recorded" class="form-label">Date and Time</label>
+                        <input type="datetime-local" class="form-control" id="date_recorded" name="date_recorded" value="{{ date_value }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Observation Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" maxlength="150" required>{{ observation.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-eco">Update Observation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

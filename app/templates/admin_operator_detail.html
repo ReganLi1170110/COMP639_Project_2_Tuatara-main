@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Operator: {{ operator.first_name }} {{ operator.last_name }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_users') }}">Users</a></li>
+            <li class="breadcrumb-item active">{{ operator.first_name }} {{ operator.last_name }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Operator Details</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Username:</strong> {{ operator.username }}</p>
+            <p><strong>Name:</strong> {{ operator.first_name }} {{ operator.last_name }}</p>
+            <p><strong>Email:</strong> <a href="mailto:{{ operator.email }}">{{ operator.email }}</a></p>
+            <p><strong>Phone:</strong> <a href="tel:{{ operator.phone_number }}">{{ operator.phone_number }}</a></p>
+        </div>
+    </div>
+
+    <h3>Line Assignments</h3>
+    <p>Toggle assignments for active lines:</p>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Line Name</th>
+                    <th>Currently Assigned</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                <tr>
+                    <td>{{ line.name }}</td>
+                    <td>
+                        {% if line.assigned %}
+                            <span class="badge bg-success">Assigned</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not assigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('assign_line') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="operator_id" value="{{ operator.user_id }}">
+                            <input type="hidden" name="line_id" value="{{ line.line_id }}">
+                            {% if line.assigned %}
+                                <button type="submit" name="action" value="remove" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Remove this assignment?');">
+                                    Remove
+                                </button>
+                            {% else %}
+                                <button type="submit" name="action" value="add" class="btn btn-sm btn-primary">
+                                    Assign
+                                </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center">No active lines found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Back to Users</a>
+</div>
+{% endblock %}

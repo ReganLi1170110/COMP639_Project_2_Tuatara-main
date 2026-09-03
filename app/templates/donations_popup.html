@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Donation History - {{ group_info.name if group_info else 'Group' }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h3 class="mb-0" style="color: var(--theme-primary, #00796b); font-weight: 600;">Donation History</h3>
+                    <span class="badge bg-success fs-6" style="background-color: var(--theme-primary, #2e7d32) !important;">Total: {{ '$' + ('%.2f'|format(total_amount or 0)) }}</span>
+                </div>
+                <div>
+                    <a href="#" class="btn btn-outline-secondary" onclick="window.close();return false;">Close</a>
+                </div>
+            </div>
+
+            {% if donation_records %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Donor</th>
+                            <th>Message</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in donation_records %}
+                        <tr>
+                            <td>{{ '$' + ('%.2f'|format(d.amount)) }}</td>
+                            <td>{{ d.donation_date.strftime('%d-%m-%Y %H:%M:%S') if d.donation_date else '-' }}</td>
+                            <td>{{ d.donation_type or '-' }}</td>
+                            <td>{% if d.is_anonymous %}Anonymous{% else %}{{ d.donor_name or d.donor_email or '-' }}{% endif %}</td>
+                            <td>{% if d.message %}{{ d.message }}{% else %}&nbsp;{% endif %}</td>
+                            <td>
+                                {% if not d.is_anonymous %}
+                                <a href="{{ url_for('donation_receipt', donation_id=d.donation_id) }}"
+                                   class="btn btn-sm btn-outline-secondary" target="_blank">Receipt</a>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                   </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No donations have been recorded for this group yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

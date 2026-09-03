@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}{{ trap.code }} - Trap Catches{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Trap {{ trap.code }}</h1>
+        <p class="text-muted mb-0">
+            Catch records for this trap on
+            <a href="{{ url_for('line_detail', line_id=trap.line_id) }}" class="text-decoration-none">{{ trap.line_name
+                }}</a>.
+        </p>
+    </div>
+    <a class="btn btn-outline-success" href="{{ url_for('line_detail', line_id=trap.line_id) }}">Back to Line</a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Trap Details</h2>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <p class="mb-1 text-muted small">Code</p>
+                        <p class="mb-0 fw-semibold">{{ trap.code }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="mb-1 text-muted small">Type</p>
+                        <p class="mb-0 fw-semibold">{{ trap.trap_type }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="mb-1 text-muted small">Latitude</p>
+                        <p class="mb-0 fw-semibold">{{ trap.latitude }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="mb-1 text-muted small">Longitude</p>
+                        <p class="mb-0 fw-semibold">{{ trap.longitude }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% block extra_css %}
+<style>
+    .catches-table-container {
+        border-radius: 8px;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-catches {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+        min-width: 1700px;
+    }
+    .table-catches thead th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.025em;
+        color: #1b5e20;
+        padding: 14px 10px;
+        vertical-align: middle;
+        white-space: nowrap !important;
+    }
+    .table-catches tbody td {
+        padding: 12px 8px;
+        color: #343a40;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        white-space: normal;
+        text-align: left;
+        display: inline-block;
+        max-width: 150px;
+    }
+    .col-id { min-width: 90px; }
+    .col-date { min-width: 110px; }
+    .col-time { min-width: 100px; }
+    .col-line { min-width: 160px; }
+    .col-code { min-width: 110px; }
+    .col-coord { min-width: 120px; }
+    .col-species { min-width: 160px; }
+    .col-status { min-width: 160px; }
+    .col-info { min-width: 100px; }
+    .col-notes { min-width: 250px; max-width: 400px; }
+    .col-recorded { min-width: 180px; }
+    .col-actions { min-width: 100px; text-align: right; }
+    .clickable-row {
+        cursor: pointer;
+    }
+    .clickable-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Custom scrollbar for better visibility on wide tables */
+    .table-responsive::-webkit-scrollbar {
+        height: 12px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f8f9fa;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #1b5e20;
+        border-radius: 6px;
+        border: 2px solid #f8f9fa;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #2e7d32;
+    }
+
+    @media (max-width: 768px) {
+        .catches-table-container {
+            overflow: visible;
+        }
+
+        .table-catches {
+            min-width: 0;
+        }
+
+        .table-catches thead {
+            display: none;
+        }
+
+        .table-catches,
+        .table-catches tbody,
+        .table-catches tr,
+        .table-catches td {
+            display: block;
+            width: 100%;
+        }
+
+        .table-catches tr {
+            border: 1px solid #e9ecef;
+            border-radius: 0.75rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .table-catches tbody td {
+            border: 0;
+            border-bottom: 1px dashed #e9ecef;
+            padding: 0.45rem 0.35rem;
+            white-space: normal;
+            text-align: right;
+            position: relative;
+            padding-left: 48%;
+            min-height: 2rem;
+        }
+
+        .table-catches tbody td:last-child {
+            border-bottom: 0;
+        }
+
+        .table-catches tbody td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0.35rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44%;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1b5e20;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            white-space: normal;
+        }
+    }
+</style>
+{% endblock %}
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Catch Records</h2>
+                    <span class="badge rounded-pill bg-success-subtle text-success border px-3">{{ trap.catches|length }} Total</span>
+                </div>
+
+                {% if trap.catches %}
+                <div class="table-responsive catches-table-container">
+                    <table class="table table-hover align-middle table-catches">
+                        <thead>
+                            <tr>
+                                <th class="col-id">Catch ID</th>
+                                <th class="col-date">Date Time</th>
+                                <th class="col-line">Trap Line</th>
+                                <th class="col-code">Trap Code</th>
+                                <th class="col-coord">Latitude</th>
+                                <th class="col-coord">Longitude</th>
+                                <th class="col-species">Species Caught</th>
+                                <th class="col-info">Sex</th>
+                                <th class="col-info">Maturity</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-info">Rebaited</th>
+                                <th class="col-info">Bait Type</th>
+                                <th class="col-info">Trap Condition</th>
+                                <th class="col-info">Strikes</th>
+                                <th class="col-notes">Notes</th>
+                                <th class="col-recorded">Recorded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    {% for catch in trap.catches %}
+    <tr class="clickable-row" onclick="window.location.href='{{ url_for('edit_catch', catch_id=catch.catch_id) }}';">
+        <td class="text-muted fw-medium" data-label="Catch ID">
+            {{ catch.catch_id }}
+        </td>
+        <td class="text-nowrap" data-label="Date">{{ catch.date.strftime('%d-%m-%Y %H:%M:%S') if catch.date else '-' }}</td>
+        <td class="text-nowrap fw-semibold" data-label="Trap Line">{{ trap.line_name }}</td>
+        <td data-label="Trap Code"><span class="badge bg-light text-dark border fw-medium">{{ trap.code }}</span></td>
+        <td class="text-nowrap small text-muted" data-label="Latitude">{{ trap.latitude }}</td>
+        <td class="text-nowrap small text-muted" data-label="Longitude">{{ trap.longitude }}</td>
+        <td class="fw-bold text-success" data-label="Species Caught">{{ catch.species_caught }}</td>
+        <td data-label="Sex">{{ catch.sex }}</td>
+        <td data-label="Maturity">{{ catch.maturity or '-' }}</td>
+        <td data-label="Status">
+            <!-- status badge (unchanged) -->
+            {% set status_class = 'bg-info-subtle text-info' %}
+            {% if 'Caught' in catch.status %}
+                {% set status_class = 'bg-danger-subtle text-danger' %}
+            {% elif 'Still set' in catch.status %}
+                {% set status_class = 'bg-success-subtle text-success' %}
+            {% elif 'Sprung' in catch.status %}
+                {% set status_class = 'bg-warning-subtle text-warning' %}
+            {% endif %}
+            <span class="badge status-badge {{ status_class }} border">
+                {{ catch.status }}
+            </span>
+        </td>
+        <td data-label="Rebaited">
+            {% if catch.rebaited == 'Yes' %}
+            <span class="badge bg-success-subtle text-success border">Yes</span>
+            {% else %}
+            <span class="badge bg-secondary-subtle text-secondary border">No</span>
+            {% endif %}
+        </td>
+        <td data-label="Bait Type"><span class="small">{{ catch.bait_type }}</span></td>
+        <td data-label="Trap Condition"><span class="small">{{ catch.trap_condition }}</span></td>
+        <td data-label="Strikes"><span class="badge rounded-pill bg-light text-dark border">{{ catch.strikes }}</span></td>
+        <td class="small text-muted text-wrap" data-label="Notes">{{ catch.notes or '-' }}</td>
+        <td class="text-nowrap small" data-label="Recorded By">{{ catch.recorded_by_name }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">No catch records found for this trap.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

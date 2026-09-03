@@ -1,0 +1,18 @@
+{
+  "2": {
+    "donation_enabled": true,
+    "impact_description": ""
+  },
+  "3": {
+    "donation_enabled": true,
+    "impact_description": "test 111"
+  },
+  "1": {
+    "donation_enabled": true,
+    "impact_description": "test"
+  },
+  "site": {
+    "receipt_logo": "/static/uploads/receipts/ConservaTrack_Logo.png",
+    "receipt_footer": "Every dollar protects our native species. Your donation to ConservaTrack funds essential trap lines, bait stations, and community conservation software. Thank you for making a difference!"
+  }
+}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Operator Dashboard - Predator Monitoring{% endblock %}
+
+{% block content %}
+<div class="card operator-hero border-0 shadow-sm overflow-hidden mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+            <div class="col-12 col-lg-8">
+                <p class="operator-kicker mb-2">Field Operations</p>
+                <h1 class="display-6 fw-semibold mb-3">Operator Dashboard</h1>
+                <p class="operator-hero-copy mb-4">
+                    Welcome back, {{ current_user.first_name }}. Track your assigned lines and review your latest
+                    catches and observations in one place.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('lines') }}" class="btn btn-light btn-lg">Browse Lines</a>
+                    <a href="{{ url_for('account_profile') }}" class="btn btn-outline-light btn-lg">My Profile</a>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="operator-callout">
+                    <p class="small text-uppercase fw-semibold mb-2 operator-callout-label">Operator</p>
+                    <h2 class="h4 mb-1">{{ current_user.first_name }} {{ current_user.last_name or '' }}</h2>
+                    <p class="mb-3">{{ current_user.email }}</p>
+                    <div class="operator-callout-metrics">
+                        <div>
+                            <span class="operator-callout-value">{{ dashboard.summary.catch_count }}</span>
+                            <span class="operator-callout-text">total catches recorded</span>
+                        </div>
+                        <div>
+                            <span class="operator-callout-value">{{ dashboard.summary.observation_count }}</span>
+                            <span class="operator-callout-text">total observations logged</span>
+                        </div>
+                        <div>
+                            <span class="operator-callout-value" id="user-points">{{ dashboard.summary.cumulative_points or 0 }}</span>
+                            <span class="operator-callout-text">points</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Card: all stats in one card, grid inside -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <div class="operator-stat-card text-center">
+                    <p class="operator-stat-label mb-2">Assigned Lines</p>
+                    <p class="operator-stat-value mb-0">{{ dashboard.summary.assigned_line_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="operator-stat-card text-center">
+                    <p class="operator-stat-label mb-2">Assets On Lines</p>
+                    <p class="operator-stat-value mb-0">{{ dashboard.summary.assigned_asset_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="operator-stat-card text-center">
+                    <p class="operator-stat-label mb-2">My Catches</p>
+                    <p class="operator-stat-value mb-0">{{ dashboard.summary.catch_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="operator-stat-card text-center">
+                    <p class="operator-stat-label mb-2">My Observations</p>
+                    <p class="operator-stat-value mb-0">{{ dashboard.summary.observation_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assigned Lines Card -->
+<div class="card operator-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h4 mb-1">Assigned Lines</h2>
+                <p class="text-muted mb-0">Lines currently assigned to you.</p>
+            </div>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.assigned_lines|length }} lines</span>
+        </div>
+
+        {% if dashboard.assigned_lines %}
+        <div class="operator-lines-list">
+            {% for line in dashboard.assigned_lines %}
+            <article class="operator-line-item">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
+                    <div>
+                        <a href="{{ url_for('line_detail', line_id=line.line_id) }}" class="fw-semibold text-decoration-none d-block">{{ line.line_name }}</a>
+                        <span class="small text-muted">{{ line.line_type }} line</span>
+                    </div>
+                    {% if line.line_status == 'active' %}
+                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle text-uppercase">{{ line.line_status }}</span>
+                    {% elif line.line_status == 'inactive' %}
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle text-uppercase">{{ line.line_status }}</span>
+                    {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle text-uppercase">{{ line.line_status }}</span>
+                    {% endif %}
+                </div>
+                <p class="mb-0 small">{{ line.asset_count }} {{ 'trap' if line.line_type == 'Trap' else 'bait station' }}{{ '' if line.asset_count == 1 else 's' }} on this line.</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No lines are assigned to this operator yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- My Latest Catches Card -->
+<div class="card operator-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h4 mb-1">My Latest Catches</h2>
+                <p class="text-muted mb-0">Most recent catches recorded by you.</p>
+            </div>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.recent_catches|length }} recent entries</span>
+        </div>
+
+        {% if dashboard.recent_catches %}
+        <div class="row g-3">
+            {% for catch in dashboard.recent_catches %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm operator-catch-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge rounded-pill text-bg-light">{{ catch.date.strftime('%d-%m-%Y %H:%M:%S') if catch.date else '-' }}</span>
+                            <span class="small text-muted">Trap {{ catch.trap_code }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <a href="{{ url_for('line_detail', line_id=catch.line_id) }}" class="fw-semibold text-decoration-none">{{ catch.line_name }}</a>
+                        </div>
+                        <div class="fw-semibold mb-1">{{ 'No catch' if catch.species_caught == 'None' else catch.species_caught }}</div>
+                        <div class="d-flex flex-wrap gap-2 small mb-2">
+                            <span class="badge rounded-pill operator-status-badge">{{ catch.status }}</span>
+                            <span class="text-muted">{{ catch.strikes }} strike{{ '' if catch.strikes == 1 else 's' }}</span>
+                            <span class="text-muted">Rebaited: {{ catch.rebaited }}</span>
+                        </div>
+                        <p class="operator-note mb-2">{{ catch.notes or 'No notes recorded.' }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">You have not recorded any catches yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- My Latest Observations Card -->
+<div class="card operator-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h4 mb-1">My Latest Observations</h2>
+                <p class="text-muted mb-0">Most recent field notes logged by you.</p>
+            </div>
+            <div>
+                <a href="{{ url_for('add_observation') }}" class="btn btn-sm btn-success">+ Add Observation</a>
+                <span class="badge rounded-pill text-bg-light ms-2">{{ dashboard.recent_observations|length }} recent entries</span>
+            </div>
+        </div>
+
+        {% if dashboard.recent_observations %}
+        <div class="row g-3">
+            {% for observation in dashboard.recent_observations %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            {% if observation.line_id %}
+                                <a href="{{ url_for('line_detail', line_id=observation.line_id) }}" class="fw-semibold text-decoration-none">{{ observation.line_name }}</a>
+                            {% else %}
+                                <span class="fw-semibold">Unassigned line</span>
+                            {% endif %}
+                            <span class="badge rounded-pill text-bg-light">{{ observation.date_recorded.strftime('%d-%m-%Y %H:%M:%S') if observation.date_recorded else '-' }}</span>
+                        </div>
+                        <div class="small text-muted mb-2">Species: {{ observation.species or 'Not specified' }}</div>
+                        <div class="small text-muted mb-2">Recorded by You</div>
+                        <p class="mb-2">{{ observation.notes or 'No observation notes recorded.' }}</p>
+                        <a href="{{ url_for('edit_observation', observation_id=observation.observation_id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">You have not recorded any observations yet. <a href="{{ url_for('add_observation') }}">Add your first observation</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+<!--comment out 
+{% block scripts %}
+{{ super() }}
+{% if operator_notifications %}
+<div class="modal fade" id="assignmentNotificationsModal" tabindex="-1" aria-labelledby="assignmentNotificationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-semibold" id="assignmentNotificationsModalLabel">Line Assignment Updates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div class="list-group list-group-flush">
+                    {% for notice in operator_notifications %}
+                    <div class="list-group-item px-0">
+                        <p class="mb-1">{{ notice.message }}</p>
+                        <p class="small text-muted mb-0">{{ notice.created_at.strftime('%d-%m-%Y %H:%M:%S') if notice.created_at else '' }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modalElement = document.getElementById('assignmentNotificationsModal');
+    if (modalElement && window.bootstrap) {
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+});
+</script>
+{% endif %}
+{% endblock %} -->
+

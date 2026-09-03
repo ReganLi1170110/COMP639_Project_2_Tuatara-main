@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Create' if action == 'create' else 'Edit' }} Group – ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex align-items-center mb-4 gap-3">
+            <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+            <h1 class="h3 mb-0">{{ 'Create New Group' if action == 'create' else 'Edit Group' }}</h1>
+        </div>
+        <div class="card shadow-sm border-0 p-4">
+            <!-- enctype required for file upload -->
+            <form method="POST" enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Group Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control"
+                           value="{{ group.name if group else '' }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea name="description" class="form-control" rows="3">{{ group.description if group else '' }}</textarea>
+                    <div class="form-text">This text appears on the home page tile.</div>
+                </div>
+
+                {% if action == 'create' %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Group Coordinator <span class="text-muted">(optional)</span></label>
+                    <select name="coordinator_id" class="form-select">
+                        <option value="">No coordinator yet</option>
+                        {% for user in coordinator_options %}
+                        <option value="{{ user.user_id }}">{{ user.full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">You can assign a coordinator now or leave this blank and add one later.</div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Group Image</label>
+
+                    {% if action == 'edit' and group.image_url %}
+                    <div class="mb-2 d-flex align-items-start gap-2">
+                        <img src="{{ group.image_url }}" alt="Current image"
+                             style="height:100px; object-fit:cover; border-radius:8px;">
+                        <div>
+                            <p class="form-text mt-1">Current image. Upload a new one below to replace it.</p>
+                                <button type="submit" name="delete_image" value="1" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure you want to delete the current image?');"
+                                    aria-label="Delete image">&times;</button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="position-relative">
+                        <input type="file" name="group_image" class="form-control" id="groupImage"
+                               accept=".jpg,.jpeg,.png">
+                        <button type="button" id="clearFileBtn" class="btn btn-sm btn-outline-secondary d-none"
+                                style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); z-index:5;"
+                                aria-label="Clear selected file">&times;</button>
+                    </div>
+                    <div class="form-text">JPG or PNG only. Maximum file size: 2 MB.</div>
+                    <div id="fileSizeError" class="alert alert-danger mt-2 d-none" role="alert" style="font-size: 0.9rem;">
+                        File is too large. Maximum file size is 2 MB.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visibility</label>
+                    <select name="is_public" class="form-select">
+                        <option value="true" {{ 'selected' if not group or group.is_public else '' }}>Public</option>
+                        <option value="false" {{ 'selected' if group and not group.is_public else '' }}>Private</option>
+                    </select>
+                </div>
+
+                {% if action == 'edit' %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Group Status</label>
+                    <select name="status" class="form-select">
+                        <option value="Active" {{ 'selected' if group and group.status == 'Active' else '' }}>Active</option>
+                        <option value="Pending" {{ 'selected' if group and group.status == 'Pending' else '' }}>Pending</option>
+                        <option value="Rejected" {{ 'selected' if group and group.status == 'Rejected' else '' }}>Rejected</option>
+                        <option value="Inactive" {{ 'selected' if group and group.status == 'Inactive' else '' }}>Inactive</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                {% if action == 'edit' %}
+                <hr class="my-4">
+                <h5 class="mb-3">Charity Information</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Registered Charity Name</label>
+                    <input type="text" name="charitable_name" class="form-control"
+                           value="{{ group.charitable_name or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Charity Registration Number</label>
+                    <input type="text" name="charity_registration_number" class="form-control"
+                           value="{{ group.charity_registration_number or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Donation Description</label>
+                    <textarea name="donation_description" class="form-control" rows="2">{{ group.donation_description or '' }}</textarea>
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                        {{ 'Create Group' if action == 'create' else 'Save Changes' }}
+                    </button>
+                    <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if action == 'edit' %}
+<section class="row justify-content-center mt-4">
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0 p-4">
+            <h5 class="mb-3">Coordinators</h5>
+            <div class="row g-4">
+                <div class="col-12 col-lg-11">
+                    <h6 class="mb-3">Current Coordinators</h6>
+                    {% if coordinators %}
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            {% for coord in coordinators %}
+                            <tr>
+                                <td class="fw-semibold">{{ coord.full_name }}</td>
+                                <td>{{ coord.email }}</td>
+                                <td><span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ coord.membership_status }}</span></td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('sa_remove_coordinator', group_id=group.group_id, user_id=coord.user_id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this coordinator?')">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted mb-0">No coordinators assigned yet.</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-12 col-lg-5">
+                    <h6 class="mb-3">Appoint a Coordinator</h6>
+                    {% if eligible_users %}
+                    <form method="POST" action="{{ url_for('sa_appoint_coordinator', group_id=group.group_id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">Select User</label>
+                            <select name="user_id" class="form-select" required>
+                                <option value="">— Choose a user —</option>
+                                {% for user in eligible_users %}
+                                <option value="{{ user.user_id }}">{{ user.full_name }} ({{ user.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Appoint as Coordinator</button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0">All active users are already members of this group.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<script>
+    // Client-side file size validation (2 MB max)
+    const fileInput = document.getElementById('groupImage');
+    const fileSizeError = document.getElementById('fileSizeError');
+    const submitBtn = document.getElementById('submitBtn');
+    const maxFileSizeBytes = 2 * 1024 * 1024; // 2 MB
+
+    const clearFileBtn = document.getElementById('clearFileBtn');
+
+    if (fileInput) {
+        const updateClearBtn = () => {
+            if (fileInput.files && fileInput.files[0]) {
+                clearFileBtn.classList.remove('d-none');
+            } else {
+                clearFileBtn.classList.add('d-none');
+            }
+        };
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file.size > maxFileSizeBytes) {
+                    fileSizeError.classList.remove('d-none');
+                    submitBtn.disabled = true;
+                } else {
+                    fileSizeError.classList.add('d-none');
+                    submitBtn.disabled = false;
+                }
+            } else {
+                fileSizeError.classList.add('d-none');
+                submitBtn.disabled = false;
+            }
+            updateClearBtn();
+        });
+
+        // Clear button resets the file input selection
+        if (clearFileBtn) {
+            clearFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileSizeError.classList.add('d-none');
+                submitBtn.disabled = false;
+                clearFileBtn.classList.add('d-none');
+                // trigger change in case other listeners rely on it
+                fileInput.dispatchEvent(new Event('change'));
+            });
+        }
+
+        // Initialize state
+        updateClearBtn();
+    }
+</script>
+{% endblock %}

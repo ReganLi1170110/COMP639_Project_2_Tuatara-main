@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Apply for New Group – ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-7">
+        <div class="d-flex align-items-center mb-4 gap-3">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+            <div>
+                <h1 class="h3 mb-0">Apply for a New Group</h1>
+                <p class="text-muted mb-0 small">Your application will be reviewed by a Super Admin before the group goes live.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4">
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Group Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control"
+                           placeholder="e.g. Wellington Predator Free" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea name="description" class="form-control" rows="3"
+                              placeholder="Briefly describe the group's mission and area of work."></textarea>
+                    <div class="form-text">This text will appear on the home page tile once approved.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Visibility</label>
+                    <select name="is_public" class="form-select">
+                        <option value="true">Public – anyone can join directly</option>
+                        <option value="false">Private – members must request access</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-info small mb-4" role="alert">
+                    <strong>Note:</strong> Once submitted, a Super Admin will review your application.
+                    You will be notified and automatically assigned as Group Coordinator if approved.
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">Submit Application</button>
+                    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

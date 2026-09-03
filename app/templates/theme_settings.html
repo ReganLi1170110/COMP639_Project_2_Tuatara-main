@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Theme Settings – ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-2">
+  <div class="col-12 col-xl-10">
+
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="h3 mb-1">🎨 Theme Settings</h1>
+        <p class="text-muted mb-0">Customise the visual appearance of your group's pages.</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('theme_editor') }}" class="btn btn-primary">
+          ✏️ Create from Scratch
+        </a>
+      </div>
+    </div>
+
+    <!-- Current active theme banner -->
+    {% if active_theme %}
+    <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid {{ active_theme.settings.colors.primary }} !important;">
+      <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3 p-4">
+        <div class="d-flex align-items-center gap-3">
+          <!-- Colour swatch -->
+          <div class="d-flex gap-1">
+            {% for k, col in active_theme.settings.colors.items() %}
+            <div style="width:24px;height:24px;border-radius:50%;background:{{ col }};border:2px solid #eee;" title="{{ k }}"></div>
+            {% endfor %}
+          </div>
+          <div>
+            <div class="fw-semibold">{{ active_theme.theme_name }}</div>
+            <small class="text-muted">Currently active · v{{ active_theme.version_number }}</small>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('theme_editor') }}" class="btn btn-outline-secondary btn-sm">Edit Current</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ═══ Pre-made gallery ═══════════════════════════════════════════════ -->
+    <h2 class="h5 mb-3">🖼️ Theme Gallery</h2>
+    <div class="row g-3 mb-5">
+      {% for t in premade %}
+      {% set idx = loop.index0 %}
+      {% set s = t.settings %}
+      <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm h-100 theme-gallery-card" style="overflow:hidden;">
+
+          <!-- Colour preview strip -->
+          <div style="height:8px; background: linear-gradient(90deg, {{ s.colors.primary }}, {{ s.colors.secondary }});"></div>
+
+          <!-- Mock mini-preview -->
+          <div style="background:{{ s.colors.background }}; padding:14px 14px 10px;">
+            <div style="height:10px; border-radius:4px; background:{{ s.colors.primary }}; margin-bottom:8px; width:70%;"></div>
+            <div style="height:6px; border-radius:3px; background:{{ s.colors.secondary }}; margin-bottom:5px; width:90%;"></div>
+            <div style="height:6px; border-radius:3px; background:{{ s.colors.secondary }}; margin-bottom:10px; width:60%; opacity:.6;"></div>
+            <div style="height:20px; border-radius:4px; background:{{ s.colors.button }}; width:45%; display:inline-block;"></div>
+          </div>
+
+          <div class="card-body pt-2 pb-3 px-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span style="font-size:1.2rem;">{{ t.emoji if t.emoji else '🌿' }}</span>
+              <span class="fw-semibold" style="font-size:.95rem;">{{ t.theme_name }}</span>
+            </div>
+            <div class="d-flex gap-1 mb-3">
+              <span class="badge rounded-pill" style="background:{{ s.colors.primary }}; font-size:.7rem;">{{ s.layout.template | capitalize }}</span>
+            </div>
+
+            <!-- Colour swatches -->
+            <div class="d-flex gap-1 mb-3">
+              {% for k, col in s.colors.items() %}
+              <div style="width:18px;height:18px;border-radius:50%;background:{{ col }};border:1.5px solid #dee2e6;" title="{{ k }}: {{ col }}"></div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <!-- Apply -->
+              <form method="POST" action="{{ url_for('theme_apply_premade') }}" class="d-inline">
+                {% if t.theme_id is defined %}
+                <input type="hidden" name="theme_source" value="db">
+                <input type="hidden" name="theme_id" value="{{ t.theme_id }}">
+                {% else %}
+                <input type="hidden" name="theme_source" value="builtin">
+                <input type="hidden" name="theme_idx" value="{{ idx }}">
+                {% endif %}
+                <button type="submit" class="btn btn-primary btn-sm"
+                  onclick="return confirm('Apply {{ t.theme_name }} to your group now?')">
+                  Apply
+                </button>
+              </form>
+
+              <!-- Customise -->
+              {% if t.theme_id is defined %}
+              <a href="{{ url_for('theme_editor', source='db', theme_id=t.theme_id) }}"
+                 class="btn btn-outline-secondary btn-sm">Customise</a>
+              {% else %}
+              <a href="{{ url_for('theme_editor', from_premade=idx, source='builtin') }}"
+                 class="btn btn-outline-secondary btn-sm">Customise</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ═══ Version history / rollback ════════════════════════════════════ -->
+    {% if history and history | length > 0 %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+        <h2 class="h6 mb-0">🕐 Previous Themes (Rollback)</h2>
+        <span class="badge bg-secondary">{{ history | length }} saved</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          {% for h in history[:8] %}
+          {% set hs = h.settings if h.settings is mapping else h.settings | from_json %}
+          <div class="list-group-item d-flex align-items-center justify-content-between gap-3 py-3 px-4">
+            <div class="d-flex align-items-center gap-3">
+              <!-- Swatch -->
+              <div class="d-flex gap-1">
+                {% if hs and hs.colors %}
+                {% for k, col in hs.colors.items() %}
+                <div style="width:16px;height:16px;border-radius:50%;background:{{ col }};border:1.5px solid #dee2e6;"></div>
+                {% endfor %}
+                {% endif %}
+              </div>
+              <div>
+                <div class="fw-medium" style="font-size:.9rem;">{{ h.theme_name }}</div>
+                <small class="text-muted">v{{ h.version_number }} · {{ h.created_at.strftime('%d-%m-%Y %H:%M:%S') if h.created_at else '-' }}</small>
+              </div>
+            </div>
+            <form method="POST" action="{{ url_for('theme_rollback') }}" class="d-inline">
+              <input type="hidden" name="theme_id" value="{{ h.theme_id }}">
+              <button type="submit" class="btn btn-outline-warning btn-sm"
+                onclick="return confirm('Restore this theme version? Your current theme will be deactivated.')">
+                Restore
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Admin: manage groups themes link -->
+    {% if role == 'Admin' %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h2 class="h6 mb-2">🛡️ Super Admin Controls</h2>
+        <p class="text-muted mb-3 small">Set the platform-wide default theme, or override individual group themes.</p>
+        <a href="{{ url_for('theme_editor') }}" class="btn btn-outline-dark btn-sm">Edit Platform Default Theme</a>
+        <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-secondary btn-sm ms-2">Manage Groups</a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .theme-gallery-card {
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: default;
+  }
+  .theme-gallery-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+  }
+</style>
+{% endblock %}

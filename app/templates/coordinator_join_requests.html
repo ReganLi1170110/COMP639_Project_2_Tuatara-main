@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Join Requests – {{ group.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-theme-btn {
+        background-color: var(--theme-btn, #2e7d32) !important;
+        border-color: var(--theme-btn, #2e7d32) !important;
+        color: #ffffff !important;
+    }
+
+    .line-theme-btn:hover,
+    .line-theme-btn:focus {
+        filter: brightness(0.92);
+        color: #ffffff !important;
+    }
+
+    .line-theme-btn-outline {
+        background-color: transparent !important;
+        border-color: var(--theme-primary, #2e7d32) !important;
+        color: var(--theme-primary, #2e7d32) !important;
+    }
+
+    .line-theme-btn-outline:hover,
+    .line-theme-btn-outline:focus {
+        background-color: var(--theme-primary, #2e7d32) !important;
+        color: #ffffff !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn line-theme-btn-outline btn-sm">← Back</a>
+    <div>
+        <h1 class="h3 mb-0">Join Requests – {{ group.name }}</h1>
+        <p class="text-muted mb-0 small">Approve or reject requests to join your group.</p>
+    </div>
+</div>
+
+<!-- Visibility toggle -->
+<div class="card border-0 shadow-sm p-4 mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h6 class="mb-1 fw-semibold">Group Visibility</h6>
+            <p class="text-muted small mb-0">
+                Currently:
+                {% if group.is_public %}
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Public</span>
+                – anyone can join as Observer
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Private</span>
+                – members must request access
+                {% endif %}
+            </p>
+        </div>
+        <form method="POST" action="{{ url_for('coordinator_set_visibility') }}">
+            {% if group.is_public %}
+            <input type="hidden" name="is_public" value="false">
+            <button type="submit" class="btn line-theme-btn-outline btn-sm">Switch to Private</button>
+            {% else %}
+            <input type="hidden" name="is_public" value="true">
+            <button type="submit" class="btn line-theme-btn btn-sm">Switch to Public</button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Pending requests -->
+<h5 class="mb-3">Pending Requests</h5>
+{% if join_requests %}
+<div class="row g-3">
+    {% for req in join_requests %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:42px;height:42px;font-size:1.2rem;">👤</div>
+                <div>
+                    <div class="fw-semibold">{{ req.full_name }}</div>
+                    <div class="text-muted small">{{ req.email }}</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <form method="POST" action="{{ url_for('coordinator_approve_request', membership_id=req.membership_id) }}" class="flex-fill">
+                    <button type="submit" class="btn line-theme-btn w-100 btn-sm">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('coordinator_reject_request', membership_id=req.membership_id) }}" class="flex-fill">
+                    <button type="submit" class="btn btn-outline-theme w-100 btn-sm">Reject</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body py-5 text-center text-muted">No pending join requests at this time.</div>
+</div>
+{% endif %}
+{% endblock %}

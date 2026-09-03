@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}{% if detail_type == 'knowledge' %}Knowledge Post Detail{% else %}Group Update Detail{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --notice-primary: var(--theme-primary, #2e7d32);
+        --notice-btn: var(--theme-btn, #2e7d32);
+    }
+
+    .notice-theme-btn {
+        background-color: var(--notice-btn) !important;
+        border-color: var(--notice-btn) !important;
+        color: #ffffff !important;
+    }
+
+    .notice-theme-btn:hover,
+    .notice-theme-btn:focus {
+        filter: brightness(0.92);
+        color: #ffffff !important;
+    }
+
+    .notice-theme-btn-outline {
+        background-color: transparent !important;
+        border-color: var(--notice-primary) !important;
+        color: var(--notice-primary) !important;
+    }
+
+    .notice-theme-btn-outline:hover,
+    .notice-theme-btn-outline:focus {
+        background-color: var(--notice-primary) !important;
+        color: #ffffff !important;
+    }
+
+    .notice-theme-like-active {
+        background-color: var(--notice-primary) !important;
+        border-color: var(--notice-primary) !important;
+        color: #ffffff !important;
+    }
+
+    .notice-theme-like-idle {
+        background-color: transparent !important;
+        border-color: var(--notice-primary) !important;
+        color: var(--notice-primary) !important;
+    }
+
+    .notice-theme-like-idle:hover,
+    .notice-theme-like-idle:focus {
+        background-color: var(--notice-primary) !important;
+        color: #ffffff !important;
+    }
+
+    .notice-theme-badge {
+        background-color: var(--notice-primary) !important;
+        color: #ffffff !important;
+        border-radius: 999px;
+        font-weight: 700;
+    }
+
+    .notice-theme-badge-muted {
+        background-color: color-mix(in srgb, var(--notice-primary) 70%, #6b7280 30%) !important;
+        color: #ffffff !important;
+        border-radius: 999px;
+        font-weight: 700;
+    }
+
+    .notice-version-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 0.75rem;
+        background: #ffffff;
+    }
+
+    .notice-action-btn {
+        min-width: 7.5rem;
+        text-align: center;
+    }
+</style>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <p class="text-muted mb-1">{% if detail_type == 'knowledge' %}Knowledge post{% else %}Group update{% endif %}</p>
+                <h2 class="mb-1">{{ notice.title }}</h2>
+                <p class="text-muted mb-0">
+                    {% if detail_type == 'knowledge' %}
+                    {{ notice.category_name or 'Uncategorized' }} | By {{ notice.author_name }} on {{ notice.created_at.strftime('%d-%m-%Y %H:%M:%S') if notice.created_at else '' }}
+                    {% else %}
+                    {{ notice.group_name }} | By {{ notice.author_name }} on {{ notice.created_at.strftime('%d-%m-%Y %H:%M:%S') if notice.created_at else '' }}
+                    {% endif %}
+                </p>
+            </div>
+            {% if detail_type == 'knowledge' %}
+            <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub', group_id=selected_group_id, active_tab='knowledge-posts') if selected_group_id else url_for('knowledge_hub', active_tab='knowledge-posts') }}">Back to hub</a>
+            {% else %}
+            <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub', group_id=selected_group_id) if selected_group_id else url_for('knowledge_hub') }}">Back to hub</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between gap-2 mb-3">
+                    <div>
+                        <span class="badge notice-theme-badge mb-2">{% if detail_type == 'knowledge' %}Knowledge detail{% else %}Update detail{% endif %}</span>
+                        <h4 class="card-title mb-1">{{ notice.title }}</h4>
+                        <div class="small text-muted">Version {{ current_version_number }}</div>
+                    </div>
+                    {% if detail_type == 'notice' and can_edit_notice %}
+                    <div class="d-flex flex-wrap gap-2 align-items-start">
+                        <a class="btn notice-theme-btn-outline notice-action-btn" href="{{ url_for('edit_group_notice', update_id=notice.update_id) }}">✏️ Edit</a>
+                        <button
+                            type="button"
+                            class="btn notice-theme-btn-outline notice-action-btn js-delete-notice"
+                            data-delete-url="{{ url_for('delete_group_notice', update_id=notice.update_id) }}"
+                            data-notice-title="{{ notice.title|e }}"
+                            data-notice-content="{{ notice.content|e }}"
+                            data-next-url="{{ url_for('group_notice_detail', update_id=notice.update_id) }}"
+                        >Delete update 🗑️</button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if detail_type == 'knowledge' and can_edit_knowledge %}
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub_compose', compose_type='knowledge', edit_draft_id=notice.update_id, return_to='detail') }}">Edit post</a>
+                </div>
+                {% endif %}
+
+                <p class="mb-3">{{ notice.content }}</p>
+
+                {% if attachments %}
+                <div class="mb-3">
+                    <div class="small text-muted mb-2">Attachments</div>
+                    <div class="d-flex flex-column gap-2">
+                        {% for attachment in attachments %}
+                        {% if attachment.file_type == 'image' %}
+                        <a href="{{ attachment.file_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                            <img src="{{ attachment.file_url }}" alt="Notice attachment" class="img-fluid rounded border" style="max-height: 260px; width: auto;">
+                        </a>
+                        {% else %}
+                        <a class="btn btn-sm notice-theme-btn-outline align-self-start" href="{{ attachment.file_url }}" target="_blank" rel="noopener">Open {{ attachment.description or 'attachment' }}</a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-4 mb-3">
+                    <button class="btn notice-theme-btn-outline btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#previousVersionsPanel" aria-expanded="false" aria-controls="previousVersionsPanel">
+                        Previous versions{% if edit_history %} ({{ edit_history|length }}){% endif %}
+                    </button>
+                    <div class="collapse mt-3" id="previousVersionsPanel">
+                        {% if edit_history %}
+                        <div class="d-flex flex-column gap-2">
+                            {% for version in edit_history|reverse %}
+                            <div class="notice-version-card p-3">
+                                <div class="d-flex justify-content-between gap-2 flex-wrap">
+                                    <div>
+                                        <div class="fw-semibold">Version {{ version.version_number or (edit_history|length - loop.index0) }}</div>
+                                        <div class="small text-muted">
+                                            Edited by {{ version.editor_name or 'Unknown' }} on {{ version.edited_at[:19].replace('T', ' ') if version.edited_at else '' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-muted">Title</div>
+                                    <div class="fw-semibold">{{ version.previous_title }}</div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-muted">Content</div>
+                                    <div>{{ version.previous_content }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mb-0">No previous versions yet.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if detail_type == 'notice' %}
+                <div class="d-flex align-items-center gap-3 mt-3 mb-3">
+                    <form method="POST" action="{{ url_for('toggle_like_group_notice', update_id=notice.update_id) }}">
+                        <input type="hidden" name="next" value="{{ url_for('group_notice_detail', update_id=notice.update_id) }}">
+                        <button class="btn btn-sm {% if notice.user_liked %}notice-theme-like-active{% else %}notice-theme-like-idle{% endif %}" type="submit">
+                            Like👍 ({{ notice.likes_count }})
+                        </button>
+                    </form>
+                    <span class="small text-muted">Comments: {{ notice.comments_count }}</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('comment_group_notice', update_id=notice.update_id) }}" class="mb-3">
+                    <input type="hidden" name="next" value="{{ url_for('group_notice_detail', update_id=notice.update_id) }}">
+                    <div class="input-group">
+                        <input class="form-control" type="text" name="comment_text" maxlength="500" placeholder="Add a comment" required>
+                        <button class="btn notice-theme-btn-outline" type="submit">Comment</button>
+                    </div>
+                </form>
+
+                {% if comments %}
+                <div class="d-flex flex-column gap-2">
+                    {% for comment in comments %}
+                    <div class="border rounded p-3 bg-light">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <strong>{{ comment.author_name }}</strong>
+                                <span class="small text-muted">{{ comment.created_at.strftime('%d-%m-%Y %H:%M:%S') if comment.created_at else '' }}</span>
+                                <div class="mt-1">{{ comment.comment_text }}</div>
+                            </div>
+                            <div class="d-flex flex-column gap-2 align-items-end">
+                                <form method="POST" action="{{ url_for('toggle_like_group_comment', comment_id=comment.comment_id) }}" class="m-0">
+                                    <input type="hidden" name="next" value="{{ url_for('group_notice_detail', update_id=notice.update_id) }}">
+                                    <button class="btn btn-sm {% if comment.user_liked %}notice-theme-like-active{% else %}notice-theme-like-idle{% endif %}" type="submit">
+                                        Like👍 ({{ comment.likes_count }})
+                                    </button>
+                                </form>
+                                {% if is_admin or comment.user_id == current_user_id or can_moderate_comments %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm notice-theme-btn-outline js-delete-comment"
+                                    data-delete-url="{{ url_for('delete_group_notice_comment', comment_id=comment.comment_id) }}"
+                                    data-comment-text="{{ comment.comment_text|e }}"
+                                    data-comment-author="{{ comment.author_name|e }}"
+                                    data-next-url="{{ url_for('group_notice_detail', update_id=notice.update_id) }}"
+                                >Delete comment</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">No comments yet.</div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if detail_type == 'knowledge' or can_edit_notice %}
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <span class="badge notice-theme-badge-muted mb-2">Meta</span>
+                <div class="small text-muted">Group</div>
+                <div class="fw-semibold mb-2">{{ notice.group_name if detail_type != 'knowledge' else 'Platform-wide' }}</div>
+                <div class="small text-muted">Status</div>
+                <div class="fw-semibold mb-2">{{ notice.status }}</div>
+                {% if detail_type == 'knowledge' %}
+                <div class="small text-muted">Category</div>
+                <div class="fw-semibold mb-2">{{ notice.category_name or 'Uncategorized' }}</div>
+                {% endif %}
+                <div class="small text-muted">Updated</div>
+                <div class="fw-semibold">{{ notice.updated_at.strftime('%d-%m-%Y %H:%M:%S') if notice.updated_at else '' }}</div>
+            </div>
+        </div>
+
+        {% if detail_type == 'notice' %}
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <span class="badge notice-theme-badge mb-2">Quick actions</span>
+                <div class="d-grid gap-2">
+                    <a class="btn notice-theme-btn-outline" href="{{ url_for('edit_group_notice', update_id=notice.update_id) }}">Edit update</a>
+                    <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub', group_id=selected_group_id, active_tab='knowledge-posts') }}">Return to Knowledge posts</a>
+                </div>
+            </div>
+        </div>
+        {% elif detail_type == 'knowledge' and can_edit_knowledge %}
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <span class="badge notice-theme-badge mb-2">Quick actions</span>
+                <div class="d-grid gap-2">
+                    <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub_compose', compose_type='knowledge', edit_draft_id=notice.update_id) }}">Edit post</a>
+                    <a class="btn notice-theme-btn-outline" href="{{ url_for('knowledge_hub', active_tab='knowledge-posts') }}">Return to hub</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if detail_type == 'notice' %}
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-labelledby="deleteCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="deleteCommentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteCommentModalLabel">Delete item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Please provide a reason for deleting this item.</p>
+                    <div class="small text-muted mb-2" id="deleteCommentPreview"></div>
+                    <input type="hidden" name="next" id="deleteCommentNextUrl" value="">
+                    <div class="mb-3">
+                        <label for="deletion_reason" class="form-label">Reason</label>
+                        <textarea class="form-control" id="deletion_reason" name="deletion_reason" rows="3" maxlength="500" required placeholder="Explain why this comment is being removed"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn notice-theme-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn notice-theme-btn">Confirm delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('deleteCommentModal');
+        const deleteForm = document.getElementById('deleteCommentForm');
+        const deletePreview = document.getElementById('deleteCommentPreview');
+        const nextUrlInput = document.getElementById('deleteCommentNextUrl');
+        const reasonInput = document.getElementById('deletion_reason');
+
+        document.querySelectorAll('.js-delete-notice').forEach(function (button) {
+            button.addEventListener('click', function () {
+                deleteForm.action = button.dataset.deleteUrl;
+                deletePreview.textContent = 'Notice: ' + button.dataset.noticeTitle + ' — "' + button.dataset.noticeContent + '"';
+                nextUrlInput.value = button.dataset.nextUrl;
+                reasonInput.value = '';
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            });
+        });
+
+        document.querySelectorAll('.js-delete-comment').forEach(function (button) {
+            button.addEventListener('click', function () {
+                deleteForm.action = button.dataset.deleteUrl;
+                deletePreview.textContent = 'Comment by ' + button.dataset.commentAuthor + ': "' + button.dataset.commentText + '"';
+                nextUrlInput.value = button.dataset.nextUrl;
+                reasonInput.value = '';
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            });
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

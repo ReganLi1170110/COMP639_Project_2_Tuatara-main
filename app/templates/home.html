@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Home – ConservaTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+.ct-group-img {
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+    width: 100%;
+}
+.ct-group-img-placeholder {
+    height: 180px;
+    background: linear-gradient(135deg, #a5d6a7, #c8e6c9);
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+.ct-group-card {
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.ct-group-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.13) !important;
+}
+.ct-group-summary-link {
+    color: inherit;
+    text-decoration: none;
+}
+.ct-group-summary-link:hover {
+    color: inherit;
+}
+/* Theme-aware outline button */
+.btn-outline-theme {
+    color: var(--theme-primary, var(--eco-primary));
+    border-color: var(--theme-primary, var(--eco-primary));
+    background: transparent;
+}
+.btn-outline-theme:hover {
+    background-color: var(--theme-primary, var(--eco-primary));
+    border-color: var(--theme-primary, var(--eco-primary));
+    color: #fff;
+}
+.btn-outline-theme.disabled,
+.btn-outline-theme:disabled {
+    color: var(--theme-primary, var(--eco-primary));
+    border-color: var(--theme-primary, var(--eco-primary));
+    background: transparent;
+    opacity: 0.55;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 align-items-center mt-1 mt-md-4">
+    <div class="col-12 col-lg-6 text-center text-lg-start">
+        <h1 class="display-5 fw-semibold mb-3">Welcome to ConservaTrack</h1>
+        <p class="lead mb-4">Discover active community groups and get involved in predator control work near you.</p>
+        {% if not session.get('user_id') %}
+        <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-2">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Sign up</a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-theme btn-lg px-4">Log in</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('static', filename='img/trap.jpg') }}"
+                 alt="Observer checking predator tracking tunnel ink cards in the field"
+                 class="img-fluid rounded shadow"
+                 style="max-height: 320px; width: auto; object-fit: cover; border-radius: 12px;">
+        </div>
+    </div>
+</div>
+
+<section class="mt-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="h3 mb-1">Active Groups</h2>
+            <p class="text-muted mb-0">Public groups can be joined directly. Private groups require an application.</p>
+        </div>
+        <span class="badge rounded-pill text-bg-light border">
+            {% if total_count %}
+            Showing {{ start_index }}-{{ end_index }} of {{ total_count }}
+            {% else %}
+            0 groups
+            {% endif %}
+        </span>
+    </div>
+
+    {% if groups %}
+    <div class="row g-3">
+        {% for group in groups %}
+        <div class="col-12 col-md-6 col-xl-4 d-flex">
+            <div class="card border-0 shadow-sm h-100 w-100 ct-group-card">
+
+                <a href="{{ url_for('group_view', group_id=group.group_id) }}" class="ct-group-summary-link">
+                    {% if group.image_url %}
+                    <img src="{{ group.image_url }}" alt="{{ group.name }}" class="ct-group-img">
+                    {% else %}
+                    <div class="ct-group-img-placeholder">🌿</div>
+                    {% endif %}
+
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <h3 class="h5 mb-0">{{ group.name }}</h3>
+                            {% if group.is_public %}
+                            <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle">Public</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Private</span>
+                            {% endif %}
+                        </div>
+
+                        {% if group.charitable_name %}
+                        <p class="text-muted mb-2">{{ group.charitable_name }}</p>
+                        {% endif %}
+
+                        <p class="mb-3">{{ group.description or 'No description provided.' }}</p>
+
+                        <div class="small text-muted mb-3">
+                            <div><strong class="text-dark">Members:</strong> {{ group.active_member_count }}</div>
+                            {% if group.charity_registration_number %}
+                            <div><strong class="text-dark">Registration:</strong> {{ group.charity_registration_number }}</div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </a>
+
+                <div class="card-body pt-0">
+                    <div class="mt-auto">
+                        {% if group.group_id in user_group_ids %}
+                            {% if user_group_roles.get(group.group_id) == 'Observer' %}
+                            <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}"
+                                  onsubmit="return confirm('Are you sure you want to leave this group?')">
+                                <button type="submit" class="btn w-100 btn-outline-danger">Leave Group</button>
+                            </form>
+                            {% else %}
+                            <div class="btn w-100 btn-outline-theme disabled">✓ You are a member</div>
+                            {% endif %}
+                        {% elif group.group_id in user_pending_group_ids %}
+                        <div class="d-grid gap-2">
+                            <div class="btn w-100 btn-outline-theme disabled">⏳ Awaiting approval</div>
+                            <form method="POST" action="{{ url_for('cancel_join_request', group_id=group.group_id) }}"
+                                  onsubmit="return confirm('Cancel your join request for this group?')">
+                                <button type="submit" class="btn btn-danger w-100">Cancel request</button>
+                            </form>
+                        </div>
+                        {% elif session.get('user_id') %}
+                        <form method="POST" action="{{ url_for('join_group', group_id=group.group_id) }}">
+                            {% if group.is_public %}
+                            <button type="submit" class="btn btn-primary w-100">Join Group</button>
+                            {% else %}
+                            <button type="submit" class="btn btn-outline-theme w-100">Request to join</button>
+                            {% endif %}
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-theme w-100">Log in to Join</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body pt-0">
+                    {% if group.is_public and group.donation_enabled %}
+                    <a href="{{ url_for('donate') }}?group_id={{ group.group_id }}" class="btn btn-outline-theme w-100 mt-2">Donate</a>
+                    {% else %}
+                    <!-- No donate link for private or donation-disabled groups -->
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if total_pages > 1 %}
+    <nav class="mt-4" aria-label="Groups pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{% if has_prev %}{{ url_for('home', page=prev_page) }}{% else %}#{% endif %}" aria-label="Previous">Previous</a>
+            </li>
+            <li class="page-item {% if not has_next %}disabled{% endif %}">
+                <a class="page-link" href="{% if has_next %}{{ url_for('home', page=next_page) }}{% else %}#{% endif %}" aria-label="Next">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body py-4 text-center text-muted">
+            No active groups are available right now.
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

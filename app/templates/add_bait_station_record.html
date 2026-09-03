@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Add Record - {{ station.code }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('lines') }}" class="text-decoration-none text-success">Lines</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('line_detail', line_id=line_id) }}" class="text-decoration-none text-success">Line {{ line_id }}</a></li>
+                <li class="breadcrumb-item active">Add Bait Station Record</li>
+            </ol>
+        </nav>
+
+        <div class="admin-hero rounded-4 p-4 mb-4">
+            <p class="admin-kicker mb-1">Field Log</p>
+            <h1 class="admin-hero-copy mb-0">Log Bait Station Activity</h1>
+            <p class="text-white-50 mb-0 mt-1">Record bait replenishment and consumption for station <strong>{{ station.code }}</strong>.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Bait Remaining (Kg) *</label>
+                            <input type="number" step="0.001" min="0" name="bait_remaining" class="form-control" placeholder="e.g. 0.500" required oninput="if(this.value<0) this.value=0;">
+                            <div class="form-text">Amount of bait found in the station.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Bait Added (Kg)</label>
+                            <input type="number" step="0.001" min="0" name="bait_added" class="form-control" placeholder="e.g. 0.200" oninput="if(this.value<0) this.value=0;">
+                            <div class="form-text">Amount of new bait added to the station.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Bait Removed (Kg)</label>
+                            <input type="number" step="0.001" min="0" name="bait_removed" class="form-control" placeholder="e.g. 0.100" oninput="if(this.value<0) this.value=0;">
+                            <div class="form-text">Amount of bait removed/taken away.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Date and time *</label>
+                            <input type="datetime-local" class="form-control" id="date" name="date" value="{{ now }}" max="{{ now }}" required>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Target Species *</label>
+                            <select name="target_species" class="form-select" required>
+                                <option value="">Select species</option>
+                                {% for s in species %}
+                                <option value="{{ s.id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Active Ingredient *</label>
+                            <select name="active_ingredient" class="form-select" required>
+                                <option value="">Select ingredient</option>
+                                {% for ingredient in active_ingredients %}
+                                <option value="{{ ingredient }}">{{ ingredient }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Formulation *</label>
+                            <select name="formulation" class="form-select" required>
+                                <option value="">Select formulation</option>
+                                {% for b in bait_types %}
+                                <option value="{{ b.name }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Concentration (%) *</label>
+                            <input type="number" step="0.01" min="0" max="100" name="concentration" class="form-control" placeholder="e.g. 0.05" required>
+                            <div class="form-text">Percentage concentration (0-100).</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Any observations or details..." maxlength="150"></textarea>
+                        </div>
+
+                        <div class="col-12 d-flex gap-2 pt-3">
+                            <button type="submit" class="btn btn-success px-4">Save Record</button>
+                            <a href="{{ url_for('line_detail', line_id=line_id) }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

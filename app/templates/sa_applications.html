@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Group Applications – ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+    <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+    <div>
+        <h1 class="h3 mb-0">Pending Group Applications</h1>
+        <p class="text-muted mb-0 small">Review and approve or reject applications to form new groups.</p>
+    </div>
+</div>
+
+{% if applications %}
+<div class="row g-3">
+    {% for app in applications %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0 fw-semibold">{{ app.name }}</h5>
+                <span class="badge bg-warning text-dark">Pending</span>
+            </div>
+            <p class="text-muted small mb-2">{{ app.description or 'No description.' }}</p>
+            <p class="small mb-1"><strong>Applicant:</strong> {{ app.applicant_name }}</p>
+            <p class="small mb-3"><strong>Email:</strong> {{ app.applicant_email }}</p>
+            <p class="small mb-3">
+                <strong>Visibility:</strong>
+                {% if app.is_public %}
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Public</span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Private</span>
+                {% endif %}
+            </p>
+            <div class="d-flex gap-2 mt-auto">
+                <form method="POST" action="{{ url_for('sa_approve_application', group_id=app.group_id) }}" class="flex-fill">
+                    <button type="submit" class="btn btn-success w-100 btn-sm">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('sa_reject_application', group_id=app.group_id) }}" class="flex-fill">
+                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm">Reject</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body py-5 text-center text-muted">No pending applications.</div>
+</div>
+{% endif %}
+{% endblock %}

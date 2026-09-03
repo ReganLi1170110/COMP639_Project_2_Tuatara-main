@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}Theme Editor – ConservaTrack{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/theme_editor.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-2">
+  <div class="col-12" style="max-width: 1200px;">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="h3 mb-1">✏️ Theme Editor</h1>
+        <p class="text-muted mb-0">Adjust settings — the preview updates live. Save when ready.</p>
+      </div>
+      <a href="{{ url_for('theme_settings') }}" class="btn btn-outline-secondary">← Back to Gallery</a>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('admin_group_theme_save', target_group_id=group_id) if admin_override else url_for('theme_save') }}"
+          enctype="multipart/form-data"
+          id="theme-form">
+
+      <div class="theme-editor-wrap">
+
+        <!-- ══ LEFT: Controls ══════════════════════════════ -->
+        <div>
+
+          <!-- Theme name -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Theme Name</label>
+            <input type="text" name="theme_name" class="form-control"
+                   value="{{ theme_name or 'My Custom Theme' }}"
+                   placeholder="e.g. Forest Morning" maxlength="100">
+          </div>
+
+          <!-- ── COLOURS ─────────────────────────────────── -->
+          <div class="editor-section">🎨 Colours</div>
+
+          {% set color_fields = [
+            ("primary_color",   "Primary Colour",     settings.colors.primary),
+            ("secondary_color", "Secondary / Accent",  settings.colors.secondary),
+            ("bg_color",        "Page Background",     settings.colors.background),
+            ("button_color",    "Button Colour",       settings.colors.get('button', settings.colors.primary)),
+          ] %}
+          {% for fname, label, val in color_fields %}
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.87rem;">{{ label }}</label>
+            <div class="color-row">
+              <input type="color" id="picker_{{ fname }}" value="{{ val }}"
+                     oninput="syncColor('{{ fname }}', this.value)">
+              <input type="text" id="text_{{ fname }}" name="{{ fname }}"
+                     class="form-control" value="{{ val }}" maxlength="7"
+                     oninput="syncPicker('{{ fname }}', this.value)"
+                     pattern="#[0-9A-Fa-f]{6}">
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- ── FONT ───────────────────────────────────── -->
+          <div class="editor-section">🔤 Font Style</div>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="font-options">
+            {% for key, label, css in font_options %}
+            <div class="opt-pill {% if settings.visuals.font == key %}selected{% endif %}"
+                 data-font-key="{{ key }}"
+                 style="font-family: {{ css }};"
+                 onclick="selectFont('{{ key }}', this)">
+              <div class="opt-label">{{ label }}</div>
+              <div class="opt-sub" style="font-family:{{ css }}">Aa Bb Cc 123</div>
+            </div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="font" id="font_input"
+                 value="{{ settings.visuals.font or 'system' }}">
+
+          <!-- ── LAYOUT ─────────────────────────────────── -->
+          <div class="editor-section">📐 Page Layout</div>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="layout-options">
+            {% for key, label, desc in layout_options %}
+            <div class="opt-pill {% if settings.layout.template == key %}selected{% endif %}"
+                 data-layout-key="{{ key }}"
+                 onclick="selectLayout('{{ key }}', this)">
+              <div class="opt-label">{{ label }}</div>
+              <div class="opt-sub">{{ desc }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="layout" id="layout_input"
+                 value="{{ settings.layout.template or 'centered' }}">
+
+          <!-- ── IMAGES ─────────────────────────────────── -->
+          <div class="editor-section">🖼️ Images</div>
+
+          <!-- Banner -->
+          <div class="img-upload-box">
+            <label>Group Banner <span class="text-muted fw-normal">(shown below navbar)</span></label>
+            {% set banner_url = settings.visuals.get('banner','') %}
+            {% if banner_url %}
+            <img src="{{ banner_url }}" class="img-thumb" alt="current banner">
+            <small class="text-muted d-block mb-2">Current banner</small>
+            {% endif %}
+            <input type="file" name="banner_file" accept=".jpg,.jpeg,.png"
+                   class="form-control form-control-sm mb-2"
+                   onchange="handleImageUpload(this, 'banner_url', 'thumb_banner', 'pv-banner-img')">
+            <div class="d-flex align-items-center gap-2">
+              <small class="text-muted">Or URL:</small>
+              <input type="text" name="banner_url" id="banner_url"
+                     class="form-control form-control-sm" style="max-width:220px;"
+                     value="{{ banner_url }}" placeholder="https://..."
+                     oninput="syncImageUrl(this.value, 'pv-banner-img', null)">
+            </div>
+            <img id="thumb_banner" class="img-new-thumb" style="display:none;" alt="">
+          </div>
+
+          <!-- Logo -->
+          <div class="img-upload-box">
+            <label>Group Logo <span class="text-muted fw-normal">(shown in navbar)</span></label>
+            {% set logo_url = settings.visuals.get('logo','') %}
+            {% if logo_url %}
+            <img src="{{ logo_url }}" class="img-thumb" alt="current logo">
+            <small class="text-muted d-block mb-2">Current logo</small>
+            {% endif %}
+            <input type="file" name="logo_file" accept=".jpg,.jpeg,.png"
+                   class="form-control form-control-sm mb-2"
+                   onchange="handleImageUpload(this, 'logo_url', 'thumb_logo', 'pv-logo-img')">
+            <div class="d-flex align-items-center gap-2">
+              <small class="text-muted">Or URL:</small>
+              <input type="text" name="logo_url" id="logo_url"
+                     class="form-control form-control-sm" style="max-width:220px;"
+                     value="{{ logo_url }}" placeholder="https://..."
+                     oninput="syncImageUrl(this.value, 'pv-logo-img', null)">
+            </div>
+            <img id="thumb_logo" class="img-new-thumb" style="display:none;" alt="">
+          </div>
+
+          <!-- Background image -->
+          <div class="img-upload-box">
+            <label>Full-Page Background Image <span class="text-muted fw-normal">(subtle overlay)</span></label>
+            {% set bg_img_url = settings.visuals.get('bg_image','') %}
+            {% if bg_img_url %}
+            <img src="{{ bg_img_url }}" class="img-thumb" alt="current bg">
+            <small class="text-muted d-block mb-2">Current background</small>
+            {% endif %}
+            <input type="file" name="bg_image_file" accept=".jpg,.jpeg,.png"
+                   class="form-control form-control-sm mb-2"
+                   onchange="handleImageUpload(this, 'bg_image_url', 'thumb_bg', 'pv-bg')">
+            <div class="d-flex align-items-center gap-2">
+              <small class="text-muted">Or URL:</small>
+              <input type="text" name="bg_image_url" id="bg_image_url"
+                     class="form-control form-control-sm" style="max-width:220px;"
+                     value="{{ bg_img_url }}" placeholder="https://..."
+                     oninput="syncImageUrl(this.value, null, 'pv-bg')">
+            </div>
+            <img id="thumb_bg" class="img-new-thumb" style="display:none;" alt="">
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex gap-2 mt-4 mb-4">
+            <button type="submit" class="btn btn-success px-4">💾 Save Theme</button>
+            <a href="{{ url_for('theme_settings') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+
+        </div><!-- /left controls -->
+
+        <!-- ══ RIGHT: Live preview ══════════════════════════ -->
+        <div class="preview-sticky">
+          <div class="editor-section">👁️ Live Preview</div>
+
+          <div id="preview-frame" style="font-family: system-ui, -apple-system, sans-serif;">
+            <div id="preview-inner">
+              <!-- Dynamic font style: updated by JS on every font change -->
+              <style id="pv-font-style"></style>
+              <!-- bg image layer (only set background-image if url is non-empty) -->
+              <div id="pv-bg" style="position:absolute;inset:0;z-index:0;pointer-events:none;
+                background-size:cover;background-position:center;opacity:.13;{% if bg_img_url and bg_img_url.strip() %}background-image:url('{{ bg_img_url }}');{% endif %}"></div>
+
+              <div id="preview-content">
+                <!-- Navbar -->
+                <div class="pv-nav" id="pv-nav" style="background:{{ settings.colors.primary }};">
+                  <span id="pv-brand" class="pv-brand">
+                    <img id="pv-logo-img"
+                         src="{% if logo_url and logo_url.strip() %}{{ logo_url }}{% endif %}"
+                         alt="logo"
+                         style="height:28px;object-fit:contain;vertical-align:middle;display:{% if logo_url and logo_url.strip() %}inline{% else %}none{% endif %};">
+                    <span id="pv-brand-text" style="{% if logo_url and logo_url.strip() %}display:none{% endif %}">ConservaTrack</span>
+                  </span>
+                  <div class="pv-links">
+                    <span>Dashboard</span><span>Lines</span><span>Catches</span>
+                  </div>
+                </div>
+
+                <!-- Banner (hidden when no url set) -->
+                <div id="pv-banner" class="pv-banner" style="{% if not (banner_url and banner_url.strip()) %}display:none{% endif %}">
+                  <img id="pv-banner-img" src="{% if banner_url and banner_url.strip() %}{{ banner_url }}{% endif %}" alt="banner">
+                </div>
+
+                <!-- ── Layout previews ── -->
+
+                <!-- CENTRED: capped width, centred on page, top-border cards -->
+                <div id="layout-centered" style="background:{{ settings.colors.background }};padding:.5rem;">
+                  <!-- Outer bg shows centred feel: content sits in a narrower column -->
+                  <div style="max-width:88%;margin:0 auto;">
+                    <div class="pv-hero" id="pv-hero-c"
+                         style="background:linear-gradient(135deg,{{ settings.colors.primary }},{{ settings.colors.secondary }});">
+                      <div class="pv-hero-title">Coordinator Dashboard</div>
+                      <div class="pv-hero-sub">Welcome back. Tracking line coverage and activity.</div>
+                      <span class="pv-btn" id="pv-btn-c" style="background:{{ settings.colors.get('button', settings.colors.primary) }};">Manage Lines</span>
+                    </div>
+                    <!-- Stat row: top-border cards -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;margin-bottom:.5rem;">
+                      {% for lbl,val in [('Lines','4'),('Operators','2'),('Catches','30'),('Obs','12')] %}
+                      <div style="background:white;border-radius:8px;padding:.5rem .3rem;text-align:center;
+                                  border-top:3px solid {{ settings.colors.primary }};
+                                  box-shadow:0 2px 6px rgba(0,0,0,.07);">
+                        <div style="font-size:.6rem;color:#888;text-transform:uppercase;letter-spacing:.07em;">{{ lbl }}</div>
+                        <div style="font-size:1rem;font-weight:700;color:{{ settings.colors.primary }};">{{ val }}</div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                    <!-- Panel cards: top-border -->
+                    <div style="background:white;border-radius:8px;border-top:3px solid {{ settings.colors.primary }};
+                                box-shadow:0 2px 6px rgba(0,0,0,.07);padding:.6rem .8rem;margin-bottom:.4rem;">
+                      <div class="pv-card-title">All Lines Overview</div>
+                      <div class="pv-card-sub">Coverage and field activity per line</div>
+                    </div>
+                    <div style="background:white;border-radius:8px;border-top:3px solid {{ settings.colors.primary }};
+                                box-shadow:0 2px 6px rgba(0,0,0,.07);padding:.6rem .8rem;">
+                      <div class="pv-card-title">Operator Activity</div>
+                      <div class="pv-card-sub">2 operators · 30 catches logged</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SIDEBAR: no top navbar, left nav + right content -->
+                <div id="layout-sidebar" style="display:none;min-height:460px;">
+                  <div style="display:flex;min-height:460px;">
+                    <!-- Left nav panel: logo at top, then links -->
+                    <div id="pv-sidebar-nav"
+                         style="width:110px;flex-shrink:0;background:{{ settings.colors.primary }};
+                                 display:flex;flex-direction:column;padding:.5rem .4rem;">
+                      <!-- Logo area in sidebar brand -->
+                      <div style="padding:.4rem .5rem .35rem;border-bottom:1px solid rgba(255,255,255,.18);
+                                  margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem;">
+                        <!-- Logo: shown when set, hidden otherwise -->
+                        <img id="pv-sidebar-logo"
+                             src="{% if logo_url and logo_url.strip() %}{{ logo_url }}{% endif %}"
+                             alt="logo"
+                             style="height:22px;object-fit:contain;display:{% if logo_url and logo_url.strip() %}inline{% else %}none{% endif %};">
+                        <span style="font-weight:700;font-size:.78rem;color:white;">ConservaTrack</span>
+                      </div>
+                      <div class="pv-sidebar-item">Dashboard</div>
+                      <div class="pv-sidebar-item">Lines</div>
+                      <div class="pv-sidebar-item">Users</div>
+                      <div class="pv-sidebar-item">Catches</div>
+                      <div style="border-top:1px solid rgba(255,255,255,.15);margin:.4rem .3rem;"></div>
+                      <div class="pv-sidebar-item" style="opacity:.65;font-size:.72rem;">Profile</div>
+                      <div class="pv-sidebar-item" style="opacity:.65;font-size:.72rem;">Log Out</div>
+                    </div>
+                    <!-- Right content area: banner at top, then page content -->
+                    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                      <!-- Banner: shown when set, hidden otherwise -->
+                      <div id="pv-sidebar-banner"
+                           style="width:100%;max-height:55px;overflow:hidden;line-height:0;
+                                   display:{% if banner_url and banner_url.strip() %}block{% else %}none{% endif %};">
+                        <img id="pv-sidebar-banner-img"
+                             src="{% if banner_url and banner_url.strip() %}{{ banner_url }}{% endif %}"
+                             alt="banner"
+                             style="width:100%;max-height:55px;object-fit:cover;display:block;">
+                      </div>
+                      <!-- Page content -->
+                      <div style="flex:1;padding:.85rem;">
+                        <div style="font-weight:700;font-size:.88rem;margin-bottom:.55rem;">Coordinator Dashboard</div>
+                        <div style="background:white;border-radius:0 8px 8px 0;
+                                    border-left:3px solid {{ settings.colors.primary }};
+                                    box-shadow:0 1px 5px rgba(0,0,0,.08);
+                                    padding:.65rem .85rem;margin-bottom:.5rem;">
+                          <div class="pv-card-title">Lines Overview</div>
+                          <div class="pv-card-sub">4 active · 2 operators</div>
+                          <span class="pv-btn mt-1 d-inline-block" id="pv-btn-sb"
+                                style="background:{{ settings.colors.get('button', settings.colors.primary) }};">View</span>
+                        </div>
+                        <div style="background:white;border-radius:0 8px 8px 0;
+                                    border-left:3px solid {{ settings.colors.secondary }};
+                                    box-shadow:0 1px 5px rgba(0,0,0,.08);
+                                    padding:.65rem .85rem;">
+                          <div class="pv-card-sub">Recent activity feed…</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- GRID: wider feel, left-border cards -->
+                <div id="layout-grid" class="pv-body" style="display:none;">
+                  <div id="pv-hero-g" class="pv-hero"
+                       style="background:linear-gradient(135deg,{{ settings.colors.primary }},{{ settings.colors.secondary }});">
+                    <div class="pv-hero-title">Coordinator Dashboard</div>
+                    <div class="pv-hero-sub">Welcome back. Tracking line coverage and activity.</div>
+                    <span class="pv-btn" id="pv-btn-g" style="background:{{ settings.colors.get('button', settings.colors.primary) }};">Manage Lines</span>
+                  </div>
+                  <!-- Stat row: left-border cards (matches real grid look) -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;margin-bottom:.5rem;">
+                    {% for lbl,val in [('Lines','4'),('Operators','2'),('Catches','30'),('Obs','12')] %}
+                    <div style="background:white;border-radius:0 8px 8px 0;padding:.5rem .4rem;text-align:center;
+                                border-left:4px solid {{ settings.colors.primary }};
+                                box-shadow:0 2px 6px rgba(0,0,0,.07);">
+                      <div style="font-size:.6rem;color:#888;text-transform:uppercase;letter-spacing:.07em;">{{ lbl }}</div>
+                      <div id="pv-grid-val" style="font-size:1rem;font-weight:700;color:{{ settings.colors.primary }};">{{ val }}</div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <!-- Panel cards: left accent bar -->
+                  <div style="background:white;border-radius:0 8px 8px 0;border-left:4px solid {{ settings.colors.primary }};
+                              box-shadow:0 2px 6px rgba(0,0,0,.07);padding:.6rem .8rem;margin-bottom:.4rem;">
+                    <div class="pv-card-title">All Lines Overview</div>
+                    <div class="pv-card-sub">4 lines · coverage and activity</div>
+                  </div>
+                  <div style="background:white;border-radius:0 8px 8px 0;border-left:4px solid {{ settings.colors.primary }};
+                              box-shadow:0 2px 6px rgba(0,0,0,.07);padding:.6rem .8rem;">
+                    <div class="pv-card-title">Operator Activity</div>
+                    <div class="pv-card-sub">2 operators · 30 catches</div>
+                  </div>
+                </div>
+
+              </div><!-- /preview-content -->
+            </div><!-- /preview-inner -->
+          </div><!-- /preview-frame -->
+
+          <p class="text-muted mt-2 mb-0" style="font-size:.76rem; text-align:center;">
+            Preview only — not saved until you click "Save Theme"
+          </p>
+        </div><!-- /right -->
+
+      </div><!-- /theme-editor-wrap -->
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Pass font options from server-rendered data into JS
+  const FONT_MAP = {
+    {% for key, label, css in font_options %}
+    "{{ key }}": "{{ css }}",
+    {% endfor %}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/theme_editor.js') }}"></script>
+{% endblock %}

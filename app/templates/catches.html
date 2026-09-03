@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Trap Catches - Predator Monitoring{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Trap Catches</h1>
+        <p class="text-muted mb-0">
+            Browse and filter predator catch records.
+            {% if total_count %}
+            Showing {{ start_index }}-{{ end_index }} of {{ total_count }} catches.
+            {% else %}
+            No catches found.
+            {% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('export_catches_csv', **request.args) }}" class="btn btn-primary me-2 mt-2">Download CSV</a>
+        <a href="{{ url_for('catches') }}" class="btn btn-outline-secondary mt-2">Clear Filters</a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="line_id" class="form-label">Trap Line</label>
+                <select class="form-select" id="line_id" name="line_id">
+                    <option value="">All Lines</option>
+                    {% for line in lines %}
+                    <option value="{{ line.line_id }}" {% if current_filters.line_id == line.line_id %}selected{% endif %}>
+                        {{ line.line_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="start_date" class="form-label">From Date</label>
+                <input type="date" class="form-control" id="start_date"  name="start_date" value="{{ current_filters.start_date }}">
+            </div>
+            <div class="col-md-2">
+                <label for="end_date" class="form-label">To Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ current_filters.end_date }}">
+            </div>
+            <div class="col-md-2">
+                <label for="species" class="form-label">Species</label>
+                <select class="form-select" id="species" name="species">
+                    <option value="">All Species</option>
+                    {% for s in species_list %}
+                    <option value="{{ s.species_id }}" {% if current_filters.species|string == s.species_id|string %}selected{% endif %}>
+                        {{ s.species_caught }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    {% for st in statuses %}
+                    <option value="{{ st.status_id }}" {% if current_filters.status|string == st.status_id|string %}selected{% endif %}>
+                        {{ st.status }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-eco w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .catches-table-container {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .table-catches {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+    .table-catches thead th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.025em;
+        color: #1b5e20;
+        padding: 14px 10px;
+        vertical-align: middle;
+        white-space: nowrap !important;
+    }
+    .table-catches tbody td {
+        padding: 12px 8px;
+        color: #343a40;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        white-space: normal;
+        text-align: left;
+        display: inline-block;
+        max-width: 150px;
+    }
+    .col-id { min-width: 90px; }
+    .col-date { min-width: 110px; }
+    .col-time { min-width: 100px; }
+    .col-line { min-width: 160px; }
+    .col-code { min-width: 110px; }
+    .col-coord { min-width: 120px; }
+    .col-species { min-width: 160px; }
+    .col-status { min-width: 160px; }
+    .col-info { min-width: 100px; }
+    .col-notes { min-width: 250px; max-width: 400px; }
+    .col-recorded { min-width: 180px; }
+    .col-actions { min-width: 100px; text-align: right; }
+
+    /* Custom scrollbar for better visibility on wide tables */
+    .table-responsive::-webkit-scrollbar {
+        height: 12px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f8f9fa;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #1b5e20;
+        border-radius: 6px;
+        border: 2px solid #f8f9fa;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #2e7d32;
+    }
+</style>
+{% endblock %}
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        {% if catches %}
+        <div class="table-responsive catches-table-container overflow-auto">
+            <table class="table table-hover align-middle table-catches">
+                <thead>
+                    <tr>
+                        <th class="col-id">Catch ID</th>
+                        <th class="col-date">Date time</th>
+                        <th class="col-line">Trap Line</th>
+                        <th class="col-code">Trap Code</th>
+                        <th class="col-coord">Latitude</th>
+                        <th class="col-coord">Longitude</th>
+                        <th class="col-species">Species Caught</th>
+                        <th class="col-info">Sex</th>
+                        <th class="col-info">Maturity</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-info">Rebaited</th>
+                        <th class="col-info">Bait Type</th>
+                        <th class="col-info">Trap Condition</th>
+                        <th class="col-info">Strikes</th>
+                        <th class="col-notes">Notes</th>
+                        <th class="col-recorded">Recorded By</th>
+                        <th class="col-actions"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for catch in catches %}
+                    <tr>
+                        <td class="text-muted fw-medium">{{ catch.catch_id }}</td>
+                        <td class="text-nowrap">{{ catch.date.strftime('%d-%m-%Y %H:%M:%S') if catch.date else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('line_detail', line_id=catch.line_id) }}" class="text-decoration-none fw-semibold">
+                                {{ catch.line_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('trap_catches', trap_id=catch.trap_id) }}" class="badge bg-light text-dark border text-decoration-none fw-medium">
+                                {{ catch.trap_code }}
+                            </a>
+                        </td>
+                        <td class="text-nowrap small text-muted">{{ catch.latitude }}</td>
+                        <td class="text-nowrap small text-muted">{{ catch.longitude }}</td>
+                        <td class="fw-bold text-success">{{ catch.species_caught }}</td>
+                        <td>{{ catch.sex }}</td>
+                        <td>{{ catch.maturity or '-' }}</td>
+                        <td>
+                            {% set status_class = 'bg-info-subtle text-info' %}
+                            {% if 'Caught' in catch.status %}
+                                {% set status_class = 'bg-danger-subtle text-danger' %}
+                            {% elif 'Still set' in catch.status %}
+                                {% set status_class = 'bg-success-subtle text-success' %}
+                            {% elif 'Sprung' in catch.status %}
+                                {% set status_class = 'bg-warning-subtle text-warning' %}
+                            {% endif %}
+                            <span class="badge status-badge {{ status_class }} border">
+                                {{ catch.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if catch.rebaited == 'Yes' %}
+                            <span class="badge bg-success-subtle text-success border">Yes</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border">No</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="small">{{ catch.bait_type }}</span></td>
+                        <td><span class="small">{{ catch.trap_condition }}</span></td>
+                        <td><span class="badge rounded-pill bg-light text-dark border">{{ catch.strikes }}</span></td>
+                        <td class="small text-muted text-wrap">{{ catch.notes or '-' }}</td>
+                        <td class="text-nowrap small">{{ catch.first_name or '' }} {{ catch.last_name or '' }}</td>
+                        <td class="text-end">
+                            {% if session.get('user_id') == catch.recorded_by %}
+                            <a href="{{ url_for('edit_catch', catch_id=catch.catch_id) }}" class="btn btn-sm btn-light border shadow-sm">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center">
+            <p class="text-muted mb-0">No catch records found matching the filters.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="mt-4" aria-label="Catches pagination">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not has_prev %}disabled{% endif %}">
+            <a
+                class="page-link"
+                href="{% if has_prev %}{{ url_for('catches', page=prev_page, line_id=current_filters.line_id, start_date=current_filters.start_date, end_date=current_filters.end_date, species=current_filters.species, status=current_filters.status) }}{% else %}#{% endif %}"
+                aria-label="Previous"
+            >Previous</a>
+        </li>
+        <li class="page-item {% if not has_next %}disabled{% endif %}">
+            <a
+                class="page-link"
+                href="{% if has_next %}{{ url_for('catches', page=next_page, line_id=current_filters.line_id, start_date=current_filters.start_date, end_date=current_filters.end_date, species=current_filters.species, status=current_filters.status) }}{% else %}#{% endif %}"
+                aria-label="Next"
+            >Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

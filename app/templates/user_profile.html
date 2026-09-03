@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.full_name }} - User Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<style>
+    .badge-image.badge-clickable {
+        cursor: pointer;
+    }
+
+    .badge-image.badge-clickable:focus-visible {
+        outline: 3px solid var(--theme-secondary, #2d7f4f);
+        outline-offset: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">{{ user.full_name }}</h1>
+        <p class="text-muted mb-0">User profile and assigned line details.</p>
+    </div>
+    {% if can_manage_user %}
+    <a class="btn btn-outline-success" href="{{ url_for('users') }}">Back to Users</a>
+    {% else %}
+    <a class="btn btn-outline-success" href="{{ url_for('account_profile') }}">Refresh Profile</a>
+    {% endif %}
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Profile Details</h2>
+                        <p class="text-muted mb-0">@{{ user.username }}</p>
+                    </div>
+                    {% if user.account_status == "Active" %}
+                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ user.account_status }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">{{ user.account_status }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1 text-muted small">Role</p>
+                        <p class="mb-0 fw-semibold">{{ user.role }}</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1 text-muted small">Phone Number</p>
+                        <p class="mb-0 fw-semibold">{{ user.phone_number }}</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1 text-muted small">Email</p>
+                        <p class="mb-0 fw-semibold">{{ user.email }}</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1 text-muted small">Emergency Contact</p>
+                        <p class="mb-0 fw-semibold">{{ user.emergency_contact_name }} ({{ user.emergency_contact_relationship }})</p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1 text-muted small">Emergency Contact Phone</p>
+                        <p class="mb-0 fw-semibold">{{ user.emergency_contact_phone_number }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Activity Summary</h2>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3 bg-body-tertiary text-center">
+                            <p class="small text-muted mb-1">Observations</p>
+                            <p class="h4 mb-0">{{ user.observation_count }}</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3 bg-body-tertiary text-center">
+                            <p class="small text-muted mb-1">Trap Catches</p>
+                            <p class="h4 mb-0">{{ user.catch_count }}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border rounded-3 p-3 bg-body-tertiary text-center">
+                            <p class="small text-muted mb-1">Assigned Lines</p>
+                            <p class="h4 mb-0">{{ user.lines|length }}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border rounded-3 p-3 bg-body-tertiary text-center">
+                            <p class="small text-muted mb-1">Last Activity</p>
+                            <p class="h6 mb-0">
+                                {% if user.last_activity_date %}
+                                {{ user.last_activity_date.strftime('%d-%m-%Y %H:%M:%S') }}
+                                {% else %}
+                                No activity yet
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if can_manage_user %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm user-admin-panel">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Admin Controls</h2>
+                        <p class="text-muted mb-0">Change this user's role or activate and deactivate the account.</p>
+                    </div>
+                    <span class="badge rounded-pill text-bg-light border">Admin only</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('user_admin_update', user_id=user.user_id) }}" class="row g-3 align-items-end js-admin-user-update-form" data-original-role="{{ user.role }}">
+                    <input type="hidden" name="redirect_to" value="profile">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Role</label>
+                        <select class="form-select" name="role">
+                            {% for role in admin_options.roles %}
+                            {% if role not in ['Coordinator'] %}
+                            <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>{{ role }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold">Account Status</label>
+                        <select class="form-select" name="account_status">
+                            {% for status in admin_options.account_statuses %}
+                            <option value="{{ status }}" {% if status == user.account_status %}selected{% endif %}>{{ status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4 d-flex flex-wrap gap-2">
+                        <button class="btn btn-success" type="submit">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Conservation Badges</h2>
+                        <p class="text-muted mb-0">Track your badge progress and earned milestones.</p>
+                    </div>
+                </div>
+                <div id="progress-tracker" class="mb-3">
+                    <div class="progress-label">
+                        {% if next_badge %}
+                        <div>{{ total_points }} / {{ next_badge.points_required }} points to {{ next_badge.name }}</div>
+                        {% else %}
+                        <div>Max level reached - all badges unlocked!</div>
+                        <div>{{ total_points }} points</div>
+                        {% endif %}
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-fill" data-progress-percent="{{ progress_percent }}"></div>
+                    </div>
+                </div>
+
+                <div id="badge-path-scroll" class="badge-path-scroll" aria-label="Badge progress path">
+                    <div id="badges-gallery" class="badge-path">
+                        {% for badge in badges %}
+                        <article
+                            class="badge-step {% if badge.earned %}earned{% else %}unearned{% endif %} {% if next_badge and badge.badge_id == next_badge.badge_id %}current{% endif %}"
+                            title="{{ badge.name }} - {{ badge.points_required }} points"
+                            data-badge-id="{{ badge.badge_id }}"
+                            data-badge-name="{{ badge.name }}"
+                        >
+                            <div class="badge-step-node">
+                                <img
+                                    class="badge-image {% if badge.earned and not badge.claimed %}badge-clickable{% endif %}"
+                                    src="{{ url_for('static', filename='badges/' ~ badge.slug ~ '.png') }}"
+                                    alt="{{ badge.name }}"
+                                    loading="lazy"
+                                    data-earned="{{ 'true' if badge.earned else 'false' }}"
+                                    data-claimed="{{ 'true' if badge.claimed else 'false' }}"
+                                >
+                            </div>
+                            
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Assigned Lines</h2>
+                    <span class="badge rounded-pill text-bg-light">{{ user.lines|length }} </span>
+                </div>
+
+                {% if user.lines %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% for line in user.lines %}
+                    <a href="{{ url_for('line_detail', line_id=line.line_id) }}" class="badge rounded-pill text-bg-light border text-decoration-none">
+                        {{ line.line_name }} ({{ line.line_type }})
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No line assignments for this user.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const progressFill = document.querySelector('.progress-fill[data-progress-percent]');
+    if (progressFill) {
+        const raw = Number(progressFill.dataset.progressPercent || 0);
+        const clamped = Math.max(0, Math.min(100, raw));
+        progressFill.style.width = `${clamped}%`;
+    }
+
+    const assignedLinesCount = Number("{{ user.lines|length }}");
+    const currentRole = "{{ user.role }}";
+
+    const adminUpdateForm = document.querySelector('.js-admin-user-update-form');
+    if (adminUpdateForm) {
+        adminUpdateForm.addEventListener('submit', function(event) {
+            const roleSelect = adminUpdateForm.querySelector('select[name="role"]');
+            const originalRole = adminUpdateForm.dataset.originalRole || '';
+
+            if (roleSelect && roleSelect.value !== originalRole) {
+                const confirmed = window.confirm(
+                    `Change this user's role from ${originalRole} to ${roleSelect.value}?`
+                );
+                if (!confirmed) {
+                    event.preventDefault();
+                }
+            }
+        });
+    }
+
+    // 1. Account status change check
+    const statusSelect = document.querySelector('select[name="account_status"]');
+    if (statusSelect) {
+        let previousStatusValue = statusSelect.value;
+        statusSelect.addEventListener('change', function() {
+            if (currentRole === 'Operator' && assignedLinesCount > 0 && this.value === 'Inactive') {
+                alert('Cannot set this operator to Inactive while they still have assigned lines. Please remove all line assignments first.');
+                this.value = previousStatusValue;
+            } else {
+                previousStatusValue = this.value;
+            }
+        });
+    }
+
+    // 2. Role change check (only for Operators with assigned lines)
+    const roleSelect = document.querySelector('select[name="role"]');
+    if (roleSelect) {
+        let previousRoleValue = roleSelect.value;
+        roleSelect.addEventListener('change', function() {
+            // If current role is Operator and user has assigned lines, prevent changing to another role
+            if (currentRole === 'Operator' && assignedLinesCount > 0 && this.value !== 'Operator') {
+                alert('Cannot change the role of an Operator who still has assigned lines. Please remove all line assignments first.');
+                this.value = previousRoleValue;
+            } else {
+                previousRoleValue = this.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge Hub{% endblock %}
+
+{% block content %}
+<style>
+    /* Theme-aware + accessible colors for tabs, badges and actions */
+    :root {
+        --hub-primary: var(--theme-primary, #2e7d32);
+        --hub-secondary: var(--theme-secondary, #a5d6a7);
+        --hub-btn: var(--theme-btn, #2e7d32);
+        --hub-text-dark: #1f2937;
+        --hub-tab-bg: #f3f4f6;
+    }
+
+    #hubTabs {
+        border-bottom-color: #6b7280 !important;
+    }
+
+    #hubTabs .nav-link {
+        color: #1f2937 !important;
+        background-color: #f3f4f6 !important;
+        opacity: 1 !important;
+        border: 1px solid #6b7280 !important;
+        border-bottom-color: #6b7280 !important;
+        font-weight: 700;
+    }
+
+    #hubTabs .nav-link:hover {
+        color: #111827 !important;
+        background-color: #e5e7eb !important;
+        border-color: #4b5563 !important;
+    }
+
+    #hubTabs .nav-link.active,
+    #hubTabs .nav-item.show .nav-link {
+        color: #ffffff !important;
+        background-color: var(--hub-primary) !important;
+        border-color: var(--hub-primary) !important;
+        opacity: 1 !important;
+    }
+
+    #hubTabs .nav-link:focus-visible {
+        outline: 3px solid #111827;
+        outline-offset: 2px;
+    }
+
+    .hub-theme-badge {
+        background-color: var(--hub-primary) !important;
+        color: #ffffff !important;
+        border-radius: 999px;
+        font-weight: 700;
+    }
+
+    .hub-theme-btn {
+        background-color: var(--hub-btn) !important;
+        border-color: var(--hub-btn) !important;
+        color: #ffffff !important;
+    }
+
+    .hub-theme-btn:hover,
+    .hub-theme-btn:focus {
+        filter: brightness(0.92);
+        color: #ffffff !important;
+    }
+
+    .hub-theme-btn-outline {
+        color: var(--hub-primary) !important;
+        border-color: var(--hub-primary) !important;
+        background-color: transparent !important;
+    }
+
+    .hub-theme-btn-outline:hover,
+    .hub-theme-btn-outline:focus {
+        background-color: var(--hub-primary) !important;
+        color: #ffffff !important;
+    }
+
+    .hub-card-surface {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-left: 4px solid var(--hub-primary);
+    }
+    /* Featured visuals (gold/yellow) */
+    .featured-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #7a5600;
+        background-color: rgba(246,200,76,0.08);
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .hub-card-surface.featured {
+        border-left-color: #f6c84c;
+        box-shadow: 0 6px 18px rgba(246,200,76,0.06);
+    }
+</style>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="mb-1">Knowledge Hub</h2>
+                <p class="text-muted mb-0">Share knowledge platform-wide and collaborate with your group.</p>
+            </div>
+            {% if is_admin %}
+            <form method="GET" action="{{ url_for('knowledge_hub') }}" class="d-flex gap-2 align-items-center">
+                <label for="groupScope" class="form-label mb-0">Group Scope</label>
+                <select id="groupScope" name="group_id" class="form-select">
+                    <option value="">All groups</option>
+                    {% for group in accessible_groups %}
+                    <option value="{{ group.group_id }}" {% if selected_group_id == group.group_id %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button class="btn hub-theme-btn-outline" type="submit">Apply</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <ul class="nav nav-tabs mb-3" id="hubTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab != 'knowledge-posts' %}active{% endif %}" id="group-notices-tab" data-bs-toggle="tab" data-bs-target="#group-notices-pane" type="button" role="tab" aria-controls="group-notices-pane" aria-selected="{{ 'true' if active_tab != 'knowledge-posts' else 'false' }}">Group Updates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'knowledge-posts' %}active{% endif %}" id="knowledge-posts-tab" data-bs-toggle="tab" data-bs-target="#knowledge-posts-pane" type="button" role="tab" aria-controls="knowledge-posts-pane" aria-selected="{{ 'true' if active_tab == 'knowledge-posts' else 'false' }}">Knowledge Posts</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade {% if active_tab != 'knowledge-posts' %}show active{% endif %}" id="group-notices-pane" role="tabpanel" aria-labelledby="group-notices-tab" tabindex="0">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <span class="badge hub-theme-badge mb-2">Group Update Board</span>
+                        <h4 class="mb-1">Group updates</h4>
+                        {% if selected_group %}
+                        <p class="small text-muted mb-0">Posting in group: <strong>{{ selected_group.name }}</strong></p>
+                        {% elif selected_group_id and not selected_group %}
+                        <p class="small text-danger mb-0">Selected group was not found.</p>
+                        {% elif is_admin %}
+                        <p class="small text-muted mb-0">Showing all groups. Select a specific group to focus the board.</p>
+                        {% else %}
+                        <p class="small text-dark mb-0">Select a group first to view group updates.</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Board posts</div>
+                        <div class="fs-4 fw-semibold">{{ group_notices|length }}</div>
+                    </div>
+                </div>
+
+                {% if can_publish_group_notice %}
+                <div class="d-flex justify-content-end mb-3">
+                    <a class="btn btn-sm hub-theme-btn" href="{{ url_for('knowledge_hub_compose', compose_type='notice', group_id=selected_group_id) }}">Draft and Create Group Updates</a>
+                </div>
+                {% endif %}
+
+                {% if group_notices %}
+                <div class="d-flex flex-column gap-3">
+                    {% for notice in group_notices %}
+                    <div class="hub-card-surface rounded-3 p-3 bg-white">
+                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                                <h5 class="mb-1">{{ notice.title }}</h5>
+                                <p class="small text-muted mb-2">{{ notice.group_name }} | By {{ notice.author_name }} on {{ notice.created_at.strftime('%d-%m-%Y %H:%M:%S') if notice.created_at else '' }}</p>
+                            </div>
+                            <a class="btn hub-theme-btn-outline" href="{{ url_for('group_notice_detail', update_id=notice.update_id) }}">Open</a>
+                        </div>
+                        <p class="mb-2">{{ notice.content }}</p>
+                        {% set edits = edit_histories.get(notice.update_id, []) %}
+                        {% if edits %}
+                        {% set last = edits[-1] %}
+                        <div class="small text-muted">Edited on {{ last.edited_at[:19].replace('T',' ') }} by {{ last.editor_name or 'Unknown' }}</div>
+                        {% elif notice.updated_at and notice.created_at and notice.updated_at > notice.created_at %}
+                        <div><span class="badge bg-secondary">Edited</span></div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">No group updates available.</div>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade {% if active_tab == 'knowledge-posts' %}show active{% endif %}" id="knowledge-posts-pane" role="tabpanel" aria-labelledby="knowledge-posts-tab" tabindex="0">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <span class="badge hub-theme-badge mb-2">Published Knowledge</span>
+                        <h4 class="mb-1">Knowledge shared with the platform</h4>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Posts</div>
+                        <div class="fs-4 fw-semibold">{{ knowledge_posts|length }}</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-3">
+                    <a class="btn btn-sm hub-theme-btn" href="{{ url_for('knowledge_hub_compose', compose_type='knowledge') }}">{% if is_coordinator %}Create/Approve Knowledge Post{% else %}Create Knowledge Post{% endif %}</a>
+                </div>
+
+                <form method="GET" action="{{ url_for('knowledge_hub') }}" class="row g-2 mb-3 align-items-center">
+                    <input type="hidden" name="active_tab" value="knowledge-posts">
+                    <div class="col-auto">
+                        <input type="search" name="q" value="{{ q or '' }}" class="form-control" placeholder="Search keyword..." aria-label="Search knowledge">
+                    </div>
+                    <div class="col-auto">
+                        <select name="category_id" class="form-select">
+                            <option value="">All categories</option>
+                            {% for cat in knowledge_categories %}
+                            <option value="{{ cat.category_id }}" {% if selected_category_id and selected_category_id == cat.category_id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        {% if selected_group_id %}
+                        <input type="hidden" name="group_id" value="{{ selected_group_id }}">
+                        {% endif %}
+                        <button class="btn hub-theme-btn" type="submit">Apply</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('knowledge_hub', active_tab='knowledge-posts', group_id=selected_group_id) if selected_group_id else url_for('knowledge_hub', active_tab='knowledge-posts') }}">Clear</a>
+                    </div>
+                </form>
+
+                {% if featured_posts %}
+                <div class="mb-3">
+                    <h5 class="mb-2">Featured</h5>
+                    <div class="d-flex gap-3 flex-wrap">
+                        {% for f in featured_posts %}
+                        <div class="hub-card-surface rounded-3 p-3 bg-white featured" style="min-width:280px; max-width:420px;">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <h6 class="mb-1"><span class="featured-badge" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="#f6c84c" xmlns="http://www.w3.org/2000/svg"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.56L19.335 24 12 19.897 4.665 24l1.636-8.69L.6 9.75l7.732-1.732L12 .587z"/></svg> Featured</span> {{ f.title }}</h6>
+                                    <p class="small text-muted mb-0">By {{ f.author_name }} on {{ f.created_at.strftime('%d-%m-%Y %H:%M:%S') if f.created_at else '' }}</p>
+                                </div>
+                                {% if is_admin %}
+                                <form method="POST" action="{{ url_for('toggle_feature_entry', entry_id=f.entry_id) }}">
+                                    <input type="hidden" name="set" value="0">
+                                    <button class="btn btn-sm hub-theme-btn-outline" type="submit">Unfeature</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            <p class="mb-0 mt-2">{{ f.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if knowledge_posts %}
+                <div class="d-flex flex-column gap-3">
+                    {% for post in knowledge_posts %}
+                    <div class="hub-card-surface rounded-3 p-3 bg-white {% if post.is_featured %}featured{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                                <h5 class="mb-1">{% if post.is_featured %}<svg width="16" height="16" viewBox="0 0 24 24" fill="#f6c84c" xmlns="http://www.w3.org/2000/svg" class="me-1" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.56L19.335 24 12 19.897 4.665 24l1.636-8.69L.6 9.75l7.732-1.732L12 .587z"/></svg>{% endif %}<a href="{{ url_for('knowledge_post_detail', entry_id=post.entry_id) }}">{{ post.title }}</a></h5>
+                                <p class="small text-muted mb-2">{{ post.category_name or 'Uncategorized' }} | By {{ post.author_name }} on {{ post.created_at.strftime('%d-%m-%Y %H:%M:%S') if post.created_at else '' }}</p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if is_coordinator and post.author_id == current_user_id %}
+                                <a class="btn btn-sm hub-theme-btn-outline" href="{{ url_for('knowledge_hub_compose', compose_type='knowledge', edit_draft_id=post.entry_id) }}">Edit</a>
+                                {% endif %}
+                                {% if is_admin or post.author_id == current_user_id %}
+                                <form method="POST" action="{{ url_for('delete_global_post', entry_id=post.entry_id) }}">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                                {% endif %}
+                                {% if is_admin %}
+                                <form method="POST" action="{{ url_for('toggle_feature_entry', entry_id=post.entry_id) }}">
+                                    <input type="hidden" name="set" value="{{ '0' if post.is_featured else '1' }}">
+                                    <button class="btn btn-sm {{ 'hub-theme-btn-outline' if post.is_featured else 'hub-theme-btn' }}" type="submit">{{ 'Unfeature' if post.is_featured else 'Feature' }}</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="mb-2">{{ post.content }}</p>
+                        {% if post.image_url %}
+                        <div>
+                            <a href="{{ post.image_url }}" target="_blank" rel="noopener">Open image</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">No knowledge posts yet. Be the first to share a useful entry.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

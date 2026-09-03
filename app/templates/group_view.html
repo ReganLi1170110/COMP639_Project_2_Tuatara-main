@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }} - ConservaTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+.group-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-primary, #245a3e) 85%, #102118),
+            color-mix(in srgb, var(--theme-primary, #245a3e) 70%, #7ea66f)
+        ),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-secondary, #d5e8bf) 35%, transparent), transparent 30%);
+    color: #f4f7f2;
+}
+.group-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -80px -80px auto;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+.group-hero-image {
+    min-height: 260px;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+.group-hero-image-placeholder {
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--theme-secondary, #d5e8bf) 32%, #ffffff),
+        color-mix(in srgb, var(--theme-primary, #245a3e) 30%, #ffffff)
+    );
+    font-size: 4rem;
+}
+.group-kicker {
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    opacity: 0.8;
+}
+.group-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    font-size: 0.88rem;
+}
+.group-stat-card {
+    border: 0;
+    border-radius: 20px;
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.98),
+        color-mix(in srgb, var(--theme-bg, #f4f8f4) 65%, #ffffff)
+    );
+    box-shadow: 0 16px 40px rgba(31, 48, 40, 0.08);
+}
+.group-stat-label {
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--theme-primary, #245a3e) 52%, #6b7a70);
+}
+.group-surface {
+    border: 0;
+    border-radius: 22px;
+    box-shadow: 0 18px 40px rgba(31, 48, 40, 0.08);
+}
+.activity-card {
+    border: 1px solid color-mix(in srgb, var(--theme-primary, #245a3e) 20%, #ffffff);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--theme-bg, #f4f8f4) 72%, #ffffff));
+}
+.activity-meta {
+    color: color-mix(in srgb, var(--theme-primary, #245a3e) 45%, #5f6f65);
+    font-size: 0.92rem;
+}
+.activity-note {
+    border-left: 3px solid color-mix(in srgb, var(--theme-primary, #245a3e) 35%, transparent);
+    padding-left: 0.9rem;
+    color: color-mix(in srgb, var(--theme-primary, #245a3e) 55%, #435247);
+}
+.member-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--theme-secondary, #d5e8bf) 55%, #ffffff),
+        color-mix(in srgb, var(--theme-primary, #245a3e) 30%, #ffffff)
+    );
+    color: color-mix(in srgb, var(--theme-primary, #245a3e) 85%, #1a2a1f);
+    font-weight: 700;
+}
+.line-summary-card {
+    border: 1px solid color-mix(in srgb, var(--theme-primary, #245a3e) 20%, #ffffff);
+    border-radius: 18px;
+    background: #ffffff;
+}
+@media (max-width: 991.98px) {
+    .group-hero {
+        border-radius: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="group-hero mb-4">
+    <div class="row g-0 align-items-stretch">
+        <div class="col-12 col-lg-7">
+            <div class="p-4 p-md-5 position-relative h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <a href="{{ url_for('home') }}" class="text-decoration-none small text-white-50">← Back to groups</a>
+                    <p class="group-kicker mb-2 mt-3">Community Conservation Group</p>
+                    <h2 class="display-6 fw-semibold mb-3">{{ group.name }}</h2>
+                    {% if group.charitable_name %}
+                    <p class="mb-2 fs-5 text-white-50">{{ group.charitable_name }}</p>
+                    {% endif %}
+                    <p class="mb-4 pe-lg-4">{{ group.description or 'No description provided.' }}</p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% if group.is_public %}
+                        <span class="group-pill">Public Group</span>
+                        {% else %}
+                        <span class="group-pill">Private Group</span>
+                        {% endif %}
+                        <span class="group-pill">{{ group_members|length }} Members</span>
+                        <span class="group-pill">{{ group_lines|length }} Lines</span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    {% if group.group_id in user_group_ids %}
+                    <div class="btn btn-light disabled">✓ You are a member</div>
+                    {% elif group.group_id in user_pending_group_ids %}
+                    <div class="btn btn-outline-light disabled">⏳ Awaiting approval</div>
+                    <form method="POST" action="{{ url_for('cancel_join_request', group_id=group.group_id) }}">
+                        <button type="submit" class="btn btn-danger">Cancel request</button>
+                    </form>
+                    {% elif session.get('user_id') %}
+                    <form method="POST" action="{{ url_for('join_group', group_id=group.group_id) }}">
+                        {% if group.is_public %}
+                        <button type="submit" class="btn btn-light">Join Group</button>
+                        {% else %}
+                        <button type="submit" class="btn btn-outline-light">Request to join</button>
+                        {% endif %}
+                    </form>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light">Log in to Join</a>
+                    {% endif %}
+
+                    {% if can_edit_group %}
+                    <a href="{{ url_for('sa_edit_group', group_id=group.group_id) }}" class="btn btn-warning">Edit Group</a>
+                    {% endif %}
+                    {% if group.is_public and donation_enabled %}
+                    <a href="{{ url_for('donate') }}?group_id={{ group.group_id }}" class="btn btn-outline-light">Donate</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            {% if group.image_url %}
+            <img src="{{ group.image_url }}" alt="{{ group.name }}" class="group-hero-image">
+            {% else %}
+            <div class="group-hero-image-placeholder">🌿</div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="mb-4">
+    <div class="row g-3">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="group-stat-card p-4 h-100">
+                <p class="group-stat-label mb-2">Active Members</p>
+                <div class="h2 mb-0">{{ group_members|length }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="group-stat-card p-4 h-100">
+                <p class="group-stat-label mb-2">Monitoring Lines</p>
+                <div class="h2 mb-0">{{ group_lines|length }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="group-stat-card p-4 h-100">
+                <p class="group-stat-label mb-2">Registration</p>
+                <div class="fw-semibold">{{ group.charity_registration_number or 'Not provided' }}</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="group-stat-card p-4 h-100">
+                <p class="group-stat-label mb-2">Donations Received</p>
+                <div class="fw-semibold">{{ ('$' + ('%.2f'|format(donation_summary.total_amount)) ) if donation_summary and donation_summary.total_amount is not none else '$0.00' }}</div>
+                <div class="text-muted small">{{ donation_summary.donation_count }} donations</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-4">
+    <div class="card group-surface mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <p class="group-stat-label mb-1">Activity Feed</p>
+                    <h2 class="h4 mb-0">Latest Activity</h2>
+                </div>
+                <span class="badge rounded-pill text-bg-light border">{{ latest_activity|length }}</span>
+            </div>
+            {% if latest_activity %}
+            <div class="row g-3">
+                {% for activity in latest_activity %}
+                <div class="col-12 col-md-6">
+                <div class="activity-card p-3 p-lg-4 h-100">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge {% if activity.activity_type == 'Catch' %}text-bg-success{% else %}text-bg-info{% endif %}">{{ activity.activity_type }}</span>
+                            {% if session.get('user_id') %}
+                            <a href="{{ url_for('line_detail', line_id=activity.line_id) }}" class="text-decoration-none fw-semibold">{{ activity.line_name }}</a>
+                            {% else %}
+                            <span class="fw-semibold">{{ activity.line_name }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="small text-muted">{{ activity.activity_date or 'No date recorded' }}</span>
+                    </div>
+
+                    <p class="mb-2 fw-semibold">{{ activity.summary }}</p>
+
+                    <div class="activity-meta d-grid gap-1 mb-3">
+                        <div>Recorded by: {{ activity.recorded_by }}</div>
+                        {% if activity.asset_code %}
+                        <div>Asset: {{ activity.asset_code }}</div>
+                        {% endif %}
+                        <div>Group: {{ group.name }}</div>
+                    </div>
+
+                    {% if activity.notes %}
+                    <div class="activity-note small">
+                        {{ activity.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No recent activity has been recorded for this group yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card group-surface mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <p class="group-stat-label mb-1">Team</p>
+                    <h2 class="h4 mb-0">Member List</h2>
+                </div>
+                <span class="badge rounded-pill text-bg-light border">{{ group_members|length }} active</span>
+            </div>
+            {% if group_members %}
+            <div class="row g-3">
+                {% for member in group_members %}
+                <div class="col-12 col-md-6">
+                <div class="d-flex align-items-start gap-3 border rounded-4 p-3 h-100">
+                    <div class="member-avatar">
+                        {{ (member.full_name or '?')[:1]|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                                <p class="fw-semibold mb-1">{{ member.full_name }}</p>
+                                <p class="small text-muted mb-0">{{ member.email }}</p>
+                            </div>
+                            <div class="text-sm-end">
+                                <span class="badge text-bg-light border mb-1">{{ member.role }}</span>
+                                <div class="small text-muted">{{ member.account_status }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No members are active in this group yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card group-surface">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <div>
+                    <p class="group-stat-label mb-1">Operations</p>
+                    <h2 class="h4 mb-0">Line List</h2>
+                </div>
+                <span class="badge rounded-pill text-bg-light border">{{ group_lines|length }} total</span>
+            </div>
+            {% if group_lines %}
+            <div class="row g-3">
+                {% for line in group_lines %}
+                <div class="col-12 col-md-6 col-xxl-4">
+                    <div class="line-summary-card p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                {% if session.get('user_id') %}
+                                <a href="{{ url_for('line_detail', line_id=line.line_id) }}" class="fw-semibold text-decoration-none">{{ line.line_name }}</a>
+                                {% else %}
+                                <p class="fw-semibold mb-0">{{ line.line_name }}</p>
+                                {% endif %}
+                                <p class="small text-muted mb-0">{{ line.line_type }}</p>
+                            </div>
+                            <span class="badge text-bg-light border text-uppercase">{{ line.line_status }}</span>
+                        </div>
+                        <div class="row g-2 small mb-3">
+                            <div class="col-6">
+                                <div class="border rounded-3 p-2 h-100">
+                                    <div class="text-muted">Catches</div>
+                                    <div class="fw-semibold">{{ line.catch_count }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded-3 p-2 h-100">
+                                    <div class="text-muted">Observations</div>
+                                    <div class="fw-semibold">{{ line.observation_count }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-0">Latest activity: {{ line.latest_activity if line.latest_activity and line.latest_activity|string != '1900-01-01 00:00:00' else 'No activity yet' }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">This group does not have any monitoring lines yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

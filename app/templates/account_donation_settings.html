@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Donation Settings - {{ 'Global' if is_sa else (group_info.name if group_info else 'Group') }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        {% if is_sa %}
+        <h3 class="mb-3">Global Receipt Settings</h3>
+        <form method="post" enctype="multipart/form-data">
+          {% if receipt_logo %}
+          <div class="mb-3">
+            <label class="form-label d-block">Current Logo</label>
+            <img src="{{ receipt_logo }}" alt="Receipt Logo" style="max-height: 80px; object-fit: contain; border: 1px solid #ddd; padding: 4px; border-radius: 4px;">
+          </div>
+          {% endif %}
+          <div class="mb-3">
+            <label for="receipt_logo" class="form-label font-weight-bold">Upload Logo</label>
+            <input class="form-control" type="file" id="receipt_logo" name="receipt_logo" accept=".jpg,.jpeg,.png">
+            <div class="form-text">Choose a logo image (JPG or PNG, max 2MB) to put on every donation receipt.</div>
+          </div>
+          <div class="mb-3">
+            <label for="receipt_footer" class="form-label font-weight-bold">Footer Text</label>
+            <textarea class="form-control" id="receipt_footer" name="receipt_footer" rows="3" maxlength="200" placeholder="Enter footer text to display at the bottom of every receipt..." oninput="updateCharCount(this)">{{ receipt_footer or '' }}</textarea>
+            <div class="form-text d-flex justify-content-between">
+              <span>This text will be placed in the footer of all receipts. (Max 200 characters)</span>
+              <span id="char-count" class="text-muted">0/200</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+          <a href="{{ url_for('home') }}" class="btn btn-secondary ms-2">Cancel</a>
+        </form>
+        {% else %}
+        <h3 class="mb-3">Donation Settings for {{ group_info.name }}</h3>
+        <form method="post">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="donation_enabled" name="donation_enabled" {% if donation_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="donation_enabled">Enable Donate button on public group page</label>
+          </div>
+          <div class="mb-3">
+            <label for="impact_description" class="form-label font-weight-bold">Impact Description</label>
+            <textarea class="form-control" id="impact_description" name="impact_description" rows="4" placeholder="Enter custom message to display to donors when they support this group...">{{ impact_description or '' }}</textarea>
+            <div class="form-text">This text will replace the default message on the Donate page when visitors choose to support your group. Leave blank to use the default message.</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save</button>
+          <a href="{{ url_for('account_profile') }}" class="btn btn-secondary ms-2">Cancel</a>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function updateCharCount(el) {
+    const counter = document.getElementById('char-count');
+    if (counter) {
+      counter.textContent = `${el.value.length}/200`;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const textarea = document.getElementById('receipt_footer');
+    if (textarea) {
+      updateCharCount(textarea);
+    }
+  });
+</script>
+{% endblock %}

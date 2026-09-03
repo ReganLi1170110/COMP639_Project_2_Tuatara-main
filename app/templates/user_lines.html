@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Line Assignments{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Operator Assignments by Line</h1>
+
+    <!-- Search box for admin (simple filter on operator name) -->
+    {% if current_role == 'Admin' %}
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" id="operatorSearch" class="form-control" placeholder="Search operator...">
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="assignmentsTable">
+            <thead>
+                <tr>
+                    <th>Line Name</th>
+                    <th>Assigned Operators (Contact)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                <tr>
+                    <td>{{ line.name }}</td>
+                    <td>
+                        {% if line.operators|length == 0 %}
+                            <span class="badge bg-warning">Unassigned</span>
+                        {% else %}
+                            {% for op in line.operators %}
+                                <div class="{% if current_role == 'Operator' and op.user_id == current_user_id %}fw-bold text-primary{% endif %}">
+                                    {{ op.first_name }} {{ op.last_name }}
+                                    (<a href="mailto:{{ op.email }}">{{ op.email }}</a>,
+                                    <a href="tel:{{ op.phone_number }}">{{ op.phone_number }}</a>)
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="text-center">No lines found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if current_role == 'Admin' %}
+<script>
+document.getElementById('operatorSearch').addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#assignmentsTable tbody tr');
+    rows.forEach(row => {
+        const cell = row.cells[1]; // operators column
+        const text = cell.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

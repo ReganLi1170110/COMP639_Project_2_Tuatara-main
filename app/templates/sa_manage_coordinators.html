@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Manage Coordinators – {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+    <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+    <div>
+        <h1 class="h3 mb-0">Coordinators – {{ group.name }}</h1>
+        <p class="text-muted mb-0 small">Appoint or remove Group Coordinators.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="mb-3">Current Coordinators</h5>
+            {% if coordinators %}
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for coord in coordinators %}
+                    <tr>
+                        <td class="fw-semibold">{{ coord.full_name }}</td>
+                        <td>{{ coord.email }}</td>
+                        <td><span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ coord.membership_status }}</span></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('sa_remove_coordinator', group_id=group.group_id, user_id=coord.user_id) }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Remove this coordinator?')">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">No coordinators assigned yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="mb-3">Appoint a Coordinator</h5>
+            {% if eligible_users %}
+            <form method="POST" action="{{ url_for('sa_appoint_coordinator', group_id=group.group_id) }}">
+                <div class="mb-3">
+                    <label class="form-label">Select User</label>
+                    <select name="user_id" class="form-select" required>
+                        <option value="">— Choose a user —</option>
+                        {% for user in eligible_users %}
+                        <option value="{{ user.user_id }}">{{ user.full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Appoint as Coordinator</button>
+            </form>
+            {% else %}
+            <p class="text-muted mb-0">All active users are already members of this group.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

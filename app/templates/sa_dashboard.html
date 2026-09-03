@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Super Admin Dashboard - ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="card sa-hero border-0 shadow-sm overflow-hidden mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-start g-4">
+            <div class="col-12 col-lg-7">
+                <p class="sa-kicker mb-2">System Control Center</p>
+                <h1 class="display-6 fw-semibold mb-3">Super Admin Dashboard</h1>
+                <p class="sa-hero-copy mb-4">
+                    Welcome, {{ current_user.first_name }}. Monitor groups, applications, coordinators,
+                    and donation activity across the full ConservaTrack platform.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-1">
+                    <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-light btn-lg">Manage Groups</a>
+                    <a href="{{ url_for('sa_group_applications') }}" class="btn btn-outline-light btn-lg">Review Applications</a>
+                </div>
+            </div>
+            <div class="col-12 col-lg-5">
+                <div class="sa-callout mt-2">
+                    <p class="small text-uppercase fw-semibold mb-2 sa-callout-label">Platform Snapshot</p>
+                    <div class="sa-callout-metrics">
+                        <div>
+                            <span class="sa-callout-value">{{ dashboard.summary.active_group_count }}</span>
+                            <span class="sa-callout-text">active groups</span>
+                        </div>
+                        <div>
+                            <span class="sa-callout-value">{{ dashboard.summary.pending_group_count }}</span>
+                            <span class="sa-callout-text">pending applications</span>
+                        </div>
+                        <div>
+                            <span class="sa-callout-value">{{ dashboard.summary.active_coordinator_count }}</span>
+                            <span class="sa-callout-text">active coordinators</span>
+                        </div>
+                        <div>
+                            <span class="sa-callout-value">{{ '$' + ('%.2f'|format(dashboard.summary.total_donation_amount or 0)) }}</span>
+                            <span class="sa-callout-text">lifetime donations</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 g-md-4">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Groups</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.total_group_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Active Groups</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.active_group_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Pending</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.pending_group_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Active Users</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.active_user_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Coordinators</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.active_coordinator_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="sa-stat-card text-center">
+                    <p class="sa-stat-label mb-2">Donations</p>
+                    <p class="sa-stat-value mb-0">{{ dashboard.summary.total_donation_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-7">
+        <div class="card sa-panel border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h2 class="h4 mb-1">Latest Groups</h2>
+                        <p class="text-muted mb-0">Recently created groups and current status.</p>
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('sa_manage_groups') }}">Open All</a>
+                </div>
+
+                {% if dashboard.recent_groups %}
+                <div class="sa-card-list">
+                    {% for group in dashboard.recent_groups %}
+                    <div class="sa-card-item">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                                <p class="fw-semibold mb-1">{{ group.name }}</p>
+                                <p class="small text-muted mb-0">{{ group.charitable_name or 'No charity profile yet' }}</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if group.is_public %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Public</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Private</span>
+                                {% endif %}
+                                
+                                {% if group.status == 'Active' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ group.status }}</span>
+                                {% elif group.status == 'Pending' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">{{ group.status }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">{{ group.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="small text-muted">Created by {{ group.created_by_name or '-' }}</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <a class="btn btn-sm btn-outline-theme" href="{{ url_for('sa_edit_group', group_id=group.group_id) }}">View</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No groups found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+        <div class="card sa-panel border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h2 class="h4 mb-1">Pending Applications</h2>
+                        <p class="text-muted mb-0">Groups waiting for super admin decision.</p>
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('sa_group_applications') }}">Review</a>
+                </div>
+
+                {% if dashboard.pending_applications %}
+                <div class="sa-activity-list">
+                    {% for application in dashboard.pending_applications %}
+                    <div class="sa-activity-item">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                            <p class="fw-semibold mb-0">{{ application.name }}</p>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span>
+                        </div>
+                        <p class="small text-muted mb-2">{{ application.applicant_name }} · {{ application.applicant_email }}</p>
+                        <div>
+                            {% if application.is_public %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Public</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Private</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No pending applications right now.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-xl-8">
+        <div class="card sa-panel border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h2 class="h4 mb-1">Recent Donations</h2>
+                        <p class="text-muted mb-0">Latest contributions across all groups.</p>
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('sa_donations') }}">View All</a>
+                </div>
+
+                {% if dashboard.recent_donations %}
+                <div class="sa-donation-list">
+                    {% for donation in dashboard.recent_donations %}
+                    <div class="sa-donation-card">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <p class="sa-donation-amount mb-0">{{ '$' + ('%.2f'|format(donation.amount)) }}</p>
+                            <span class="badge bg-light text-dark border">{{ donation.donation_type or 'Donation' }}</span>
+                        </div>
+                        <p class="small mb-1"><span class="text-muted">Group:</span> {{ donation.group_name or 'General Donation' }}</p>
+                        <p class="small mb-1"><span class="text-muted">Donor:</span>
+                            {% if donation.is_anonymous %}
+                            Anonymous
+                            {% else %}
+                            {{ donation.donor_name or donation.donor_email or '-' }}
+                            {% endif %}
+                        </p>
+                        <p class="small text-muted mb-0">{{ donation.donation_date.strftime('%d-%m-%Y %H:%M') if donation.donation_date else '-' }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No donation records available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="card sa-panel border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h2 class="h4 mb-3">Administration</h2>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('sa_manage_groups') }}" class="btn btn-outline-theme text-start">Groups and Coordinators</a>
+                    <a href="{{ url_for('sa_group_applications') }}" class="btn btn-outline-theme text-start">Application Approvals</a>
+                    <a href="{{ url_for('sa_donations') }}" class="btn btn-outline-theme text-start">Donation History</a>
+                    <a href="{{ url_for('admin_fulfillment') }}" class="btn btn-outline-theme text-start">Badge Fulfillment</a>
+                    <a href="{{ url_for('admin_map') }}" class="btn btn-outline-theme text-start">System Map</a>
+                    <a href="{{ url_for('admin_params') }}" class="btn btn-outline-theme text-start">Parameters</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

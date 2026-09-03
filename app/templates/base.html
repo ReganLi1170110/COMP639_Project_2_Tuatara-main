@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}ConservaTrack{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    
+
+    <!-- Group theme CSS variables (US 3.9) -->
+    {% if theme_vars %}
+    <style id="group-theme-vars">
+      :root { {{ theme_vars | safe }} }
+    </style>
+    {% endif %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    {% block extra_css %}
+    {% endblock %}
+    {% if active_layout == 'grid' %}
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/grid.css') }}">
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/grid_centered_nav.css') }}">
+    {% endif %}
+    {% if active_layout == 'sidebar' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    {% endif %}
+    {% if active_layout == 'centered' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/centered.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/grid_centered_nav.css') }}">
+    {% endif %}
+    
+</head>
+
+<body>
+
+<!-- Full-page background image (US 2.5 AC3) – non-sidebar layouts -->
+{% if active_theme_bg_image and active_layout != 'sidebar' %}
+<div style="position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:url('{{ active_theme_bg_image | safe }}') center/cover no-repeat;opacity:.07;"></div>
+{% endif %}
+
+{% if active_layout == 'sidebar' %}
+{# ═══════════════ SIDEBAR LAYOUT ═══════════════ #}
+
+<!-- Background overlay inside sidebar layout -->
+{% if active_theme_bg_image %}
+<div id="theme-bg-overlay"
+     style="background-image:url('{{ active_theme_bg_image | safe }}');"></div>
+{% endif %}
+
+<button id="sidebar-mobile-toggle" type="button" aria-label="Open menu" aria-controls="sidebar-panel" aria-expanded="false">
+  &#9776;
+</button>
+<div id="sidebar-mobile-backdrop" aria-hidden="true"></div>
+
+<!-- Fixed left sidebar -->
+<div id="sidebar-panel">
+
+  <!-- Brand / logo -->
+  <a id="sidebar-brand" href="{{ url_for('home') }}">
+    {% if active_theme_logo %}
+    <img src="{{ active_theme_logo }}" alt="Logo">
+    {% endif %}
+    <span>{{ session.get('group_name', 'ConservaTrack') }}</span>
+  </a>
+
+  <!-- Navigation links -->
+  <nav id="sidebar-nav">
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'home' else '' }}" href="{{ url_for('home') }}">Home</a>
+    {% if session.get('role') == 'Admin' %}
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'sa_dashboard' else '' }}" href="{{ url_for('sa_dashboard') }}">Dashboard</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'sa_manage_groups' else '' }}" href="{{ url_for('sa_manage_groups') }}">Groups</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'sa_group_applications' else '' }}" href="{{ url_for('sa_group_applications') }}">Applications</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'sa_donations' else '' }}" href="{{ url_for('sa_donations') }}">Donations</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'admin_map' else '' }}" href="{{ url_for('admin_map') }}">Map</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'admin_params' else '' }}" href="{{ url_for('admin_params') }}">Parameters</a>
+    {% elif session.get('role') == 'Coordinator' %}
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.path.startswith('/lines') else '' }}" href="/lines">Lines</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.path.startswith('/users') else '' }}" href="/users">Users</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'coordinator_join_requests' else '' }}" href="{{ url_for('coordinator_join_requests') }}">Requests</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a>
+    {% elif session.get('role') == 'Observer' %}
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.path.startswith('/lines') else '' }}" href="/lines">Lines</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a>
+    {% elif session.get('role') == 'Operator' %}
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'operator_dashboard' else '' }}" href="{{ url_for('operator_dashboard') }}">Dashboard</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'lines' else '' }}" href="{{ url_for('lines') }}">Lines</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'my_lines' else '' }}" href="{{ url_for('my_lines') }}">My Lines</a>
+      <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a>
+    
+    {% endif %}
+
+    {% if session.get('user_id') %}
+    <div class="sidebar-divider"></div>
+      {% if session.get('role') %}
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'knowledge_hub' else '' }}" href="{{ url_for('knowledge_hub') }}">Share</a>
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'catches' else '' }}" href="{{ url_for('catches') }}">Catches</a>
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'catches_chart' else '' }}" href="{{ url_for('catches_chart') }}">Summary</a>
+      {% endif %}
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'donate' else '' }}" href="{{ url_for('donate') }}">Donate</a>
+    {% else %}
+    <div class="sidebar-divider"></div>
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'donate' else '' }}" href="{{ url_for('donate') }}">Donate</a>
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'login' else '' }}" href="{{ url_for('login') }}">Login</a>
+    {% endif %}
+  </nav>
+
+  <!-- Sidebar footer: account links -->
+  {% if session.get('user_id') %}
+  <div id="sidebar-footer">
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'account_profile' else '' }}" href="{{ url_for('account_profile') }}">Profile</a>
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'change_password' else '' }}" href="{{ url_for('change_password') }}">Password</a>
+    {% if session.get('role') != 'Admin' %}
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'change_group' else '' }}" href="{{ url_for('change_group') }}">Change Group</a>
+    {% endif %}
+    {% if session.get('role') in ('Coordinator', 'Admin') %}
+    <a class="sidebar-link {{ 'current-menu-item' if request.endpoint == 'account_donation_settings' else '' }}" href="{{ url_for('account_donation_settings') }}">Donation Setting</a>
+    {% endif %}
+    <a class="sidebar-link" href="{{ url_for('logout') }}">Log Out</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Right content column -->
+<div id="sidebar-content">
+
+  <!-- Banner inside content area -->
+  {% if active_theme_banner %}
+  <div id="sidebar-banner">
+    <img src="{{ active_theme_banner }}" alt="Group Banner">
+  </div>
+  {% endif %}
+
+  <main class="container py-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-white text-center py-3 mt-auto">
+    <div class="container">
+      <small>ConservaTrack © 2026 <br> Developed by <strong>Tuatara</strong></small>
+    </div>
+  </footer>
+</div>
+
+{% else %}
+{# ═══════════════ STANDARD (CENTRED / GRID) LAYOUT ═══════════════ #}
+
+{% set current_endpoint = request.endpoint or '' %}
+{% set current_path = request.path or '' %}
+{% set account_endpoints = [
+  'account_profile',
+  'change_password',
+  'change_group',
+  'account_donation_settings'
+] %}
+
+<!-- Top navbar -->
+<nav class="navbar navbar-expand-xl">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('home') }}">
+            {% if active_theme_logo %}
+            <img src="{{ active_theme_logo }}" alt="Logo"
+                 style="height:36px;object-fit:contain;vertical-align:middle;">
+            {% endif %}
+            {{ session.get('group_name', 'ConservaTrack') }}
+        </a>
+
+    <div class="collapse navbar-collapse justify-content-end" id="main-nav-menu">
+      <ul class="navbar-nav ms-auto mb-2 mb-xl-0">
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'home' else '' }}" href="{{ url_for('home') }}">Home</a></li>
+                {% if session.get('role') == 'Admin' %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'sa_dashboard' else '' }}" href="{{ url_for('sa_dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'sa_manage_groups' else '' }}" href="{{ url_for('sa_manage_groups') }}">Groups</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'sa_group_applications' else '' }}" href="{{ url_for('sa_group_applications') }}">Applications</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'sa_donations' else '' }}" href="{{ url_for('sa_donations') }}">Donations</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'admin_fulfillment' else '' }}" href="{{ url_for('admin_fulfillment') }}">Fulfillment</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'admin_map' else '' }}" href="{{ url_for('admin_map') }}">Map</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'admin_params' else '' }}" href="{{ url_for('admin_params') }}">Parameters</a></li>
+                {% elif session.get('role') == 'Coordinator' %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_path.startswith('/lines') else '' }}" href="/lines">Lines</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a></li>
+              <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_path.startswith('/users') else '' }}" href="/users">Users</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'coordinator_join_requests' else '' }}" href="{{ url_for('coordinator_join_requests') }}">Requests</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a></li>
+                {% elif session.get('role') == 'Observer' %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_path.startswith('/lines') else '' }}" href="/lines">Lines</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a></li>
+              <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a></li>
+                {% elif session.get('role') == 'Operator' %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'operator_dashboard' else '' }}" href="{{ url_for('operator_dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'lines' else '' }}" href="{{ url_for('lines') }}">Lines</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'group_map' else '' }}" href="{{ url_for('group_map') }}">Map</a></li>
+              <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'badges_intro' else '' }}" href="{{ url_for('badges_intro') }}">Badges</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'my_lines' else '' }}" href="{{ url_for('my_lines') }}">Mine</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'apply_group' else '' }}" href="{{ url_for('apply_group') }}">Apply</a></li>
+                {% endif %}
+        
+                {% if session.get('user_id') %}
+                  {% if session.get('role') %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'knowledge_hub' else '' }}" href="{{ url_for('knowledge_hub') }}">Share</a></li>
+                 
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'catches' else '' }}" href="{{ url_for('catches') }}">Catches</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'catches_chart' else '' }}" href="{{ url_for('catches_chart') }}">Summary</a></li>
+                  {% endif %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'donate' else '' }}" href="{{ url_for('donate') }}">Donate</a></li>
+                {% else %}
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'login' else '' }}" href="{{ url_for('login') }}">Login</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'current-menu-item' if current_endpoint == 'donate' else '' }}" href="{{ url_for('donate') }}">Donate</a></li>
+                {% endif %}
+      </ul>
+    </div>
+
+    <div class="navbar-right-actions">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav-menu"
+        aria-controls="main-nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      {% if session.get('user_id') %}
+      <ul class="navbar-nav navbar-account">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle {{ 'current-menu-item' if current_endpoint in account_endpoints else '' }}" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">Account</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item {{ 'current-menu-item' if current_endpoint == 'account_profile' else '' }}" href="{{ url_for('account_profile') }}">Profile</a></li>
+            <li><a class="dropdown-item {{ 'current-menu-item' if current_endpoint == 'change_password' else '' }}" href="{{ url_for('change_password') }}">Change Password</a></li>
+                          {% if session.get('role') != 'Admin' %}
+            <li><a class="dropdown-item {{ 'current-menu-item' if current_endpoint == 'change_group' else '' }}" href="{{ url_for('change_group') }}">Change Group</a></li>
+                          {% endif %}
+            {% if session.get('role') in ('Coordinator', 'Admin') %}
+            <li><a class="dropdown-item {{ 'current-menu-item' if current_endpoint == 'account_donation_settings' else '' }}" href="{{ url_for('account_donation_settings') }}">Donation Setting</a></li>
+            {% endif %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Log Out</a></li>
+          </ul>
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+    </div>
+</nav>
+
+<!-- Group banner (US 2.5 AC2) – only when a real URL is saved -->
+{% if active_theme_banner %}
+<div style="width:100%;max-height:180px;overflow:hidden;line-height:0;">
+    <img src="{{ active_theme_banner }}" alt="Group Banner"
+         style="width:100%;max-height:180px;object-fit:cover;display:block;">
+</div>
+{% endif %}
+
+<main class="container py-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+    {{ self.content() }}
+</main>
+
+<footer class="text-white text-center py-3 mt-auto">
+    <div class="container">
+        <small>ConservaTrack © 2026 <br> Developed by <strong>Tuatara</strong></small>
+    </div>
+</footer>
+
+{% endif %}{# end layout if #}
+
+<!-- Floating Theme button – Coordinator and Admin only -->
+{% if session.get('role') in ('Coordinator', 'Admin') %}
+<a href="{{ url_for('theme_settings') }}"
+   id="theme-fab"
+   title="Theme Settings"
+   style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:1050;
+     background:var(--theme-primary,#2e7d32);color:white;border-radius:50px;
+     padding:.55rem 1.1rem;font-weight:600;font-size:.88rem;
+     box-shadow:0 4px 16px rgba(0,0,0,.22);text-decoration:none;
+     display:flex;align-items:center;gap:.4rem;
+     transition:transform .15s,box-shadow .15s;"
+   onmouseover="this.style.transform='scale(1.06)';this.style.boxShadow='0 6px 22px rgba(0,0,0,.3)'"
+   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,.22)'">
+  🎨 <span>Theme</span>
+</a>
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/attachment_validation.js') }}"></script>
+{% block scripts %}{% endblock %}
+{% if active_layout == 'sidebar' %}
+<script src="{{ url_for('static', filename='js/side_bar_nav.js') }}"></script>
+{% endif %}
+{% if login_notifications and login_notifications|length > 0 %}
+<div class="modal fade" id="loginNotificationsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notifications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group">
+                {% for n in login_notifications %}
+                    <li class="list-group-item">{{ n.message }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="application/json" id="loginNotificationsData">{{ login_notifications|tojson }}</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            var notes = JSON.parse(document.getElementById('loginNotificationsData').textContent || '[]');
+            if (notes && notes.length) {
+                new bootstrap.Modal(document.getElementById('loginNotificationsModal')).show();
+            }
+        } catch(e) {}
+    });
+</script>
+{% endif %}
+</body>
+</html>

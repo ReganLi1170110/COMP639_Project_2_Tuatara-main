@@ -1,0 +1,538 @@
+{% extends "base.html" %}
+
+{% block title %}Kiwi Guardian Badges – How It Works{% endblock %}
+
+{% block extra_css %}
+<style>
+  .intro-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .hero-section {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--theme-primary, #53743d) 0%, color-mix(in srgb, var(--theme-primary, #4a7c23) 80%, black 20%) 100%);
+    border-radius: 20px;
+    color: white;
+  }
+
+  .hero-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+  }
+
+  .hero-section .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+
+
+  .section-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 5px solid var(--theme-primary, #4a7c23);
+    color: #333;
+  }
+
+  .section-card p {
+    color: #404040;
+  }
+
+  .section-card strong {
+    color: var(--theme-primary, #2d5016);
+  }
+
+  .section-title {
+    color: var(--theme-primary, #2d5016);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .points-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  .points-table th,
+  .points-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    color: #404040;
+  }
+
+  .points-table th {
+    background-color: color-mix(in srgb, var(--theme-primary, #2d5016) 10%, #f5f5f5 90%);
+    color: var(--theme-primary, #2d5016);
+    font-weight: bold;
+  }
+
+  .points-table tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .badge-grid-intro {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .badge-card-intro {
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fefefe;
+    transition: transform 0.2s;
+  }
+
+  .badge-card-intro:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .badge-image-intro {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+
+  .badge-name {
+    font-weight: bold;
+    color: var(--theme-primary, #2d5016);
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .badge-points {
+    font-size: 0.8rem;
+    color: #404040;
+    font-weight: 500;
+  }
+
+  .badge-meaning {
+    font-size: 0.75rem;
+    color: #555;
+    font-style: italic;
+    margin-top: 0.25rem;
+  }
+
+  .tip-box {
+    background: color-mix(in srgb, var(--theme-primary, #4caf50) 10%, #e8f5e9 90%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 4px solid var(--theme-primary, #4caf50);
+    color: color-mix(in srgb, var(--theme-primary, #2d5016) 80%, black 20%);
+  }
+
+  .badge-tier {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+
+  .tier-entry { background: #e8e8e8; color: #555; }
+  .tier-easy { background: #c8e6c9; color: #2e7d32; }
+  .tier-medium-easy { background: #b3e5fc; color: #0277bd; }
+  .tier-medium { background: #ffe0b2; color: #e65100; }
+  .tier-medium-hard { background: #ffccbc; color: #bf360c; }
+  .tier-hard { background: #d1c4e9; color: #4527a0; }
+  .tier-very-hard { background: #f8bbd0; color: #ad1457; }
+  .tier-extreme { background: #ffcdd2; color: #c62828; }
+
+  .badge-card-intro.unearned .badge-image-intro {
+    opacity: 0.4;
+    filter: grayscale(100%);
+  }
+
+  .badge-card-intro.earned .badge-image-intro {
+    opacity: 1;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .badge-card-intro.earned .badge-image-intro:hover {
+    transform: scale(1.05);
+  }
+
+  .badge-action {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .badge-action .btn {
+    min-width: 120px;
+  }
+
+  .claim-modal-note {
+    font-size: 0.95rem;
+    color: #404040;
+  }
+
+  @media (max-width: 768px) {
+    .hero-section h1 { font-size: 1.8rem; }
+    .section-title { font-size: 1.4rem; }
+    .badge-grid-intro { grid-template-columns: repeat(2, 1fr); }
+    .points-table th, .points-table td { padding: 8px; font-size: 0.85rem; }
+  }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="intro-container">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <h1>Kiwi Guardian Badges</h1>
+    <p class="subtitle">Turn your conservation efforts into lasting recognition</p>
+  </div>
+
+  <!-- How It Works -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>🏆</span> How It Works
+    </div>
+    <p>Every time you contribute to predator control and conservation, you earn <strong>Guardian Points</strong>. Reach point thresholds to unlock beautiful digital badges – and when you unlock a badge, you can claim a <strong>free physical badge</strong> delivered to your New Zealand address.</p>
+    <div class="tip-box">
+      <strong>✨ No points are ever deducted</strong> – even when you claim physical badges. Your points grow with your contribution, and badges are yours forever.
+    </div>
+  </div>
+
+  <!-- How to Earn Points -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>📝</span> How to Earn Points
+      <span style="font-size: 0.9rem; font-weight: normal; color: #666; margin-left: 10px; font-style: italic;">
+        (Note: For testing purpose, every point is multiplied by 100 in codes to make it easier to show the progress)
+      </span>
+    </div>
+    <table class="points-table">
+      <thead>
+        <tr><th>Action</th><th>Points</th><th>Why it matters</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Add Catch</td><td><strong>10</strong></td><td>Highest difficulty – trap check, animal ID, recording</td></tr>
+        <tr><td>Create Group</td><td><strong>5</strong></td><td>Team setup, admin, recruitment effort</td></tr>
+        <tr><td>Public Knowledge Hub Post</td><td><strong>3</strong> + 1 per like*</td><td>Sharing knowledge inspires others</td></tr>
+        <tr><td>Create Trap Line</td><td><strong>3</strong></td><td>Planning & physical setup of multiple traps</td></tr>
+        <tr><td>Add Trap</td><td><strong>2</strong></td><td>Physical installation or registration</td></tr>
+        <tr><td>Add Bait Station</td><td><strong>2</strong></td><td>Similar effort to adding a trap</td></tr>
+        <tr><td>Create Bait Station Line</td><td><strong>2</strong></td><td>Planning bait station locations</td></tr>
+        <tr><td>Add Observation</td><td><strong>1</strong></td><td>Seeing pests or native species</td></tr>
+        <tr><td>Daily Login</td><td><strong>1</strong></td><td>Consistent engagement (once per day)</td></tr>
+      </tbody>
+    </table>
+    <p class="tip-box" style="margin-top: 0.5rem;">* <strong>Like points:</strong> You earn 1 point per like on your Knowledge Hub post, up to 10 points maximum per post.</p>
+  </div>
+
+  <!-- Badge Thresholds -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>🎖️</span> Badge Thresholds
+    </div>
+    <p>As your Guardian Points grow, you'll unlock badges at these milestones:
+      {% if session.get('user_id') %}
+      <strong>(Your points: {{ total_points }})</strong>
+      {% endif %}
+    </p>
+    <div class="badge-grid-intro">
+      {% if badges %}
+        {% for badge in badges %}
+        <div class="badge-card-intro {% if badge.earned %}earned{% else %}unearned{% endif %}" data-badge-id="{{ badge.badge_id }}" data-badge-name="{{ badge.name }}">
+          <img src="{{ url_for('static', filename='badges/' ~ badge.slug ~ '.png') }}" 
+               class="badge-image-intro" 
+               alt="{{ badge.name }}"
+               data-earned="{{ 'true' if badge.earned else 'false' }}"
+               data-claimed="{{ 'true' if badge.claimed else 'false' }}">
+          <div class="badge-name">{{ badge.name }} <span class="badge-tier tier-{% if loop.index0 == 0 %}entry{% elif loop.index0 == 1 %}easy{% elif loop.index0 == 2 %}medium-easy{% elif loop.index0 == 3 %}medium{% elif loop.index0 == 4 %}medium-hard{% elif loop.index0 == 5 %}hard{% elif loop.index0 == 6 %}very-hard{% else %}extreme{% endif %}">{% if loop.index0 == 0 %}Entry{% elif loop.index0 == 1 %}Easy{% elif loop.index0 == 2 %}Medium-Easy{% elif loop.index0 == 3 %}Medium{% elif loop.index0 == 4 %}Medium-Hard{% elif loop.index0 == 5 %}Hard{% elif loop.index0 == 6 %}Very Hard{% else %}Extremely Hard{% endif %}</span></div>
+          <div class="badge-points">{{ badge.points_required }} points</div>
+          <div class="badge-meaning">"{{ badge.meaning }}"</div>
+          {% if badge.earned %}
+          <div class="badge-action">
+            {% if badge.claimed %}
+            <button type="button" class="btn btn-sm {% if badge.claim_status == 'Shipped' %}btn-success{% else %}btn-secondary{% endif %}" disabled>
+              {{ 'Shipped' if badge.claim_status == 'Shipped' else 'Claimed' }}
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-sm btn-outline-primary claim-physical-button" data-badge-id="{{ badge.badge_id }}" data-badge-name="{{ badge.name }}">Claim Physical</button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        {# Fallback for non-logged-in users: show static badges #}
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/rimu.png') }}" class="badge-image-intro" alt="Rimu Kiwi">
+          <div class="badge-name">Rimu Kiwi <span class="badge-tier tier-entry">Entry</span></div>
+          <div class="badge-points">500 points</div>
+          <div class="badge-meaning">"Roots of conservation"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/kauri.png') }}" class="badge-image-intro" alt="Kauri Kiwi">
+          <div class="badge-name">Kauri Kiwi <span class="badge-tier tier-easy">Easy</span></div>
+          <div class="badge-points">2,000 points</div>
+          <div class="badge-meaning">"Ancient and enduring"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/pohutukawa.png') }}" class="badge-image-intro" alt="Pōhutukawa Kiwi">
+          <div class="badge-name">Pōhutukawa Kiwi <span class="badge-tier tier-medium-easy">Medium-Easy</span></div>
+          <div class="badge-points">5,000 points</div>
+          <div class="badge-meaning">"Coastal guardian"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/kowhai.png') }}" class="badge-image-intro" alt="Kōwhai Kiwi">
+          <div class="badge-name">Kōwhai Kiwi <span class="badge-tier tier-medium">Medium</span></div>
+          <div class="badge-points">10,000 points</div>
+          <div class="badge-meaning">"Bright future"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/manuka.png') }}" class="badge-image-intro" alt="Mānuka Kiwi">
+          <div class="badge-name">Mānuka Kiwi <span class="badge-tier tier-medium-hard">Medium-Hard</span></div>
+          <div class="badge-points">20,000 points</div>
+          <div class="badge-meaning">"Healing the land"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/pounamu.png') }}" class="badge-image-intro" alt="Pounamu Kiwi">
+          <div class="badge-name">Pounamu Kiwi <span class="badge-tier tier-hard">Hard</span></div>
+          <div class="badge-points">40,000 points</div>
+          <div class="badge-meaning">"Treasure of the land"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/whetu.png') }}" class="badge-image-intro" alt="Whetū Kiwi">
+          <div class="badge-name">Whetū Kiwi <span class="badge-tier tier-very-hard">Very Hard</span></div>
+          <div class="badge-points">60,000 points</div>
+          <div class="badge-meaning">"Guided by the stars"</div>
+        </div>
+        <div class="badge-card-intro">
+          <img src="{{ url_for('static', filename='badges/matariki.png') }}" class="badge-image-intro" alt="Matariki Kiwi">
+          <div class="badge-name">Matariki Kiwi <span class="badge-tier tier-extreme">Extremely Hard</span></div>
+          <div class="badge-points">100,000 points</div>
+          <div class="badge-meaning">"New beginnings, remembrance"</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Badge Meanings Deep Dive -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>📖</span> What Each Badge Means
+    </div>
+    <div class="badge-grid-intro" style="grid-template-columns: 1fr;">
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/rimu.png') }}" class="badge-image-intro" alt="Rimu Kiwi" style="min-width:80px;">
+        <div><strong>Rimu Kiwi</strong><br><em>"Roots of conservation"</em><br>Entry level – your journey begins here</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/kauri.png') }}" class="badge-image-intro" alt="Kauri Kiwi" style="min-width:80px;">
+        <div><strong>Kauri Kiwi</strong><br><em>"Ancient and enduring"</em><br>Like the 2,000-year-old Kauri tree – steady, long-term effort</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/pohutukawa.png') }}" class="badge-image-intro" alt="Pōhutukawa Kiwi" style="min-width:80px;">
+        <div><strong>Pōhutukawa Kiwi</strong><br><em>"Coastal guardian"</em><br>Named for the summer-flowering tree – protects beach habitats</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/kowhai.png') }}" class="badge-image-intro" alt="Kōwhai Kiwi" style="min-width:80px;">
+        <div><strong>Kōwhai Kiwi</strong><br><em>"Bright future"</em><br>Golden like kōwhai flowers – a mid-tier milestone</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/manuka.png') }}" class="badge-image-intro" alt="Mānuka Kiwi" style="min-width:80px;">
+        <div><strong>Mānuka Kiwi</strong><br><em>"Healing the land"</em><br>Honeycomb texture – significant contribution to restoration</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/pounamu.png') }}" class="badge-image-intro" alt="Pounamu Kiwi" style="min-width:80px;">
+        <div><strong>Pounamu Kiwi</strong><br><em>"Treasure of the land"</em><br>Jade green – elite tier, truly special dedication</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/whetu.png') }}" class="badge-image-intro" alt="Whetū Kiwi" style="min-width:80px;">
+        <div><strong>Whetū Kiwi</strong><br><em>"Guided by the stars"</em><br>Star-speckled – consistent effort across many seasons</div>
+      </div>
+      <div class="badge-card-intro" style="text-align: left; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='badges/matariki.png') }}" class="badge-image-intro" alt="Matariki Kiwi" style="min-width:80px;">
+        <div><strong>Matariki Kiwi</strong><br><em>"New beginnings, remembrance"</em><br>Deep indigo with nine stars – the ultimate guardian badge</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Physical Badges -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>📦</span> Claiming Physical Badges
+    </div>
+    <p>Every digital badge you unlock can be claimed as a <strong>free physical badge</strong> – mailed to any New Zealand address at no cost to you.</p>
+    <ul style="margin: 1rem 0 0 1.5rem;">
+      <li>Go to your <strong>Profile Page</strong> → Badges Gallery</li>
+      <li>Click <strong>"Claim Physical"</strong> under any earned badge</li>
+      <li>Enter your NZ delivery address (postcode must be 4 digits)</li>
+      <li>Your request goes to our admin team for fulfillment</li>
+      <li>Each badge type can be claimed <strong>once</strong> – duplicates are prevented</li>
+    </ul>
+    <div class="tip-box" style="margin-top: 1rem;">
+      <strong>📮 Free postage within New Zealand</strong> – Your badge will arrive as a real-world thank you for protecting Aotearoa's wildlife.
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>❓</span> Frequently Asked Questions
+    </div>
+    <div style="margin-top: 1rem;">
+      <p><strong>Do points ever decrease?</strong><br>No. Points are only added – never deducted. Even if you claim a physical badge, your points stay the same.</p>
+      <p><strong>Can I claim the same badge twice?</strong><br>No. Each badge type can be physically claimed once per user. Digital badges remain visible forever.</p>
+      <p><strong>What if I move after claiming?</strong><br>Please ensure your address is correct at claim time. Contact an admin if your badge hasn't arrived.</p>
+      <p><strong>How long does delivery take?</strong><br>Typically 2-3 weeks within New Zealand. You'll receive an email when your badge ships.</p>
+      <p><strong>Do Group Coordinators earn points differently?</strong><br>No – all users earn points the same way. Some actions (like creating trap lines) are only available to Coordinators, which naturally gives more earning opportunities.</p>
+    </div>
+  </div>
+
+  <!-- Call to Action -->
+  <div class="section-card" style="text-align: center; background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #e8f5e9) 10%, white 90%) 0%, color-mix(in srgb, var(--theme-primary, #c8e6c9) 20%, white 80%) 100%);">
+    <div class="section-title" style="justify-content: center;">
+      <span>🚀</span> Ready to Start?
+    </div>
+    <p>Every catch, every trap, every post brings you closer to your next badge.<br>Your conservation work matters – and now it's recognized.</p>
+    <a href="{{ url_for('account_profile') }}" style="display: inline-block; margin-top: 1rem; padding: 12px 24px; background: var(--theme-primary, #2d5016); color: white; text-decoration: none; border-radius: 30px; font-weight: bold;">Go to My Profile →</a>
+  </div>
+</div>
+
+<!-- Claim Badge Modal -->
+<div class="modal fade" id="claimBadgeModal" tabindex="-1" aria-labelledby="claimBadgeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="claimBadgeModalLabel">Claim Physical Badge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="claim-modal-note mb-3">Free postage within New Zealand.</p>
+                <form id="badgeClaimForm" action="{{ url_for('account_profile') }}" method="POST" novalidate>
+                    <input type="hidden" name="claim_action" value="claim_physical">
+                    <input type="hidden" name="claim_badge_id" id="claimBadgeId">
+                    <div class="mb-3">
+                        <label for="claimFullName" class="form-label">Full Name</label>
+                        <input id="claimFullName" name="claim_full_name" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">Full Name is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimStreetAddress" class="form-label">Street Address</label>
+                        <input id="claimStreetAddress" name="claim_street_address" class="form-control" type="text" required maxlength="150">
+                        <div class="invalid-feedback">Street Address is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimSuburb" class="form-label">Suburb</label>
+                        <input id="claimSuburb" name="claim_suburb" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">Suburb is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimCity" class="form-label">City</label>
+                        <input id="claimCity" name="claim_city" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">City is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimPostcode" class="form-label">Postcode</label>
+                        <input id="claimPostcode" name="claim_postcode" class="form-control" type="text" inputmode="numeric" pattern="\d{4}" maxlength="4" required>
+                        <div class="invalid-feedback">Please enter a valid 4-digit NZ postcode.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-eco">Claim Physical</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const claimModalEl = document.getElementById("claimBadgeModal");
+        const badgeClaimForm = document.getElementById("badgeClaimForm");
+        const claimBadgeIdInput = document.getElementById("claimBadgeId");
+        const claimFullName = document.getElementById("claimFullName");
+        const claimStreetAddress = document.getElementById("claimStreetAddress");
+        const claimSuburb = document.getElementById("claimSuburb");
+        const claimCity = document.getElementById("claimCity");
+        const claimPostcode = document.getElementById("claimPostcode");
+        const claimBadgeModal = new bootstrap.Modal(claimModalEl);
+
+        function clearClaimFormValidation() {
+            badgeClaimForm.classList.remove("was-validated");
+            [claimFullName, claimStreetAddress, claimSuburb, claimCity, claimPostcode].forEach(function(field) {
+                field.classList.remove("is-invalid");
+            });
+        }
+
+        function openClaimModal(badgeId, badgeName) {
+            claimBadgeIdInput.value = badgeId;
+            document.getElementById("claimBadgeModalLabel").textContent = `Claim Physical - ${badgeName}`;
+            badgeClaimForm.reset();
+            clearClaimFormValidation();
+            claimBadgeModal.show();
+        }
+
+        function attachClaimHandlers() {
+            document.querySelectorAll(".claim-physical-button").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    const badgeId = this.dataset.badgeId;
+                    const badgeName = this.dataset.badgeName;
+                    openClaimModal(badgeId, badgeName);
+                });
+            });
+
+            document.querySelectorAll(".badge-image-intro[data-earned='true'][data-claimed='false']").forEach(function(image) {
+                image.addEventListener("click", function() {
+                    const card = this.closest(".badge-card-intro");
+                    const badgeId = card.dataset.badgeId;
+                    const badgeName = card.dataset.badgeName;
+                    openClaimModal(badgeId, badgeName);
+                });
+            });
+        }
+
+        function validatePostcode() {
+            const value = claimPostcode.value.trim();
+            if (!/^\d{4}$/.test(value)) {
+                claimPostcode.classList.add("is-invalid");
+                return false;
+            }
+            claimPostcode.classList.remove("is-invalid");
+            return true;
+        }
+
+        claimPostcode.addEventListener("blur", validatePostcode);
+        claimPostcode.addEventListener("keyup", validatePostcode);
+
+        badgeClaimForm.addEventListener("submit", function(event) {
+            if (!validatePostcode()) {
+                event.preventDefault();
+                claimPostcode.focus();
+            }
+        });
+
+        attachClaimHandlers();
+    });
+</script>
+{% endblock %}

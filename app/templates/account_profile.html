@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}My Account - Predator Monitoring{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<style>
+    .badge-step .badge-action {
+        margin-top: 0.75rem;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .badge-step .badge-action .btn {
+        min-width: 124px;
+    }
+
+    .badge-image.badge-clickable {
+        cursor: pointer;
+    }
+
+    .badge-image.badge-clickable:focus-visible {
+        outline: 3px solid var(--theme-secondary, #2d7f4f);
+        outline-offset: 3px;
+    }
+
+    .claim-modal-note {
+        font-size: 0.95rem;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-12 col-lg-9">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <div>
+                <h1 class="h3 mb-1">My Account Profile</h1>
+                <p class="text-muted mb-0">Update your own profile information.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Conservation Badges</h2>
+                        <p class="text-muted mb-0">Track your badge progress and earned milestones.</p>
+                    </div>
+                </div>
+                <div id="progress-tracker" class="mb-3">
+                    <div class="progress-label">
+                        {% if next_badge %}
+                        <div>{{ total_points }} / {{ next_badge.points_required }} points to {{ next_badge.name }}</div>
+                        {% else %}
+                        <div>Max level reached - all badges unlocked!</div>
+                        <div>{{ total_points }} points</div>
+                        {% endif %}
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-fill" data-progress-percent="{{ progress_percent }}"></div>
+                    </div>
+                </div>
+
+                <div id="badge-path-scroll" class="badge-path-scroll" aria-label="Badge progress path">
+                    <div id="badges-gallery" class="badge-path">
+                        {% for badge in badges %}
+                        <article
+                            class="badge-step {% if badge.earned %}earned{% else %}unearned{% endif %} {% if next_badge and badge.badge_id == next_badge.badge_id %}current{% endif %}"
+                            title="{{ badge.name }} - {{ badge.points_required }} points"
+                            data-badge-id="{{ badge.badge_id }}"
+                            data-badge-name="{{ badge.name }}"
+                        >
+                            <div class="badge-step-node">
+                                <img
+                                    class="badge-image {% if badge.earned and not badge.claimed %}badge-clickable{% endif %}"
+                                    src="{{ url_for('static', filename='badges/' ~ badge.slug ~ '.png') }}"
+                                    alt="{{ badge.name }}"
+                                    loading="lazy"
+                                    data-earned="{{ 'true' if badge.earned else 'false' }}"
+                                    data-claimed="{{ 'true' if badge.claimed else 'false' }}"
+                                >
+                            </div>
+                            {% if badge.earned %}
+                            <div class="badge-action">
+                                {% if badge.claimed %}
+                                <button type="button" class="btn btn-sm {% if badge.claim_status == 'Shipped' %}btn-success{% else %}btn-secondary{% endif %}" disabled>
+                                    {{ 'Shipped' if badge.claim_status == 'Shipped' else 'Claimed' }}
+                                </button>
+                                {% else %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary claim-physical-button"
+                                    data-badge-id="{{ badge.badge_id }}"
+                                    data-badge-name="{{ badge.name }}"
+                                >
+                                    Claim Physical
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-12 col-lg-9">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('account_profile') }}" class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="username" class="form-label">Username</label>
+                        <input id="username" class="form-control" type="text" name="username" value="{{ user.username }}" disabled>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="email" class="form-label">Email</label>
+                        <input id="email" class="form-control" type="email" name="email" value="{{ user.email }}" required maxlength="100">
+                        <div class="invalid-feedback">
+                            Email must contain @ and . and only alphanumeric characters.
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input id="first_name" class="form-control" type="text" name="first_name" value="{{ user.first_name }}" required maxlength="50">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input id="last_name" class="form-control" type="text" name="last_name" value="{{ user.last_name or '' }}" maxlength="50">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="phone_number" class="form-label">Phone Number</label>
+                        <input id="phone_number" class="form-control" type="tel" name="phone_number" value="{{ user.phone_number }}" required pattern="(?:\+64|0)[2-9][0-9]{7,9}" title="Enter a valid NZ number, for example 0212345678 or +64212345678" inputmode="tel" maxlength="20" placeholder="0212345678 or +64212345678">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Role</label>
+                        <input class="form-control" type="text" value="{{ user.role }}" disabled>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Account Status</label>
+                        <input class="form-control" type="text" value="{{ user.account_status }}" disabled>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                        <input id="emergency_contact_name" class="form-control" type="text" name="emergency_contact_name" value="{{ user.emergency_contact_name }}" required maxlength="100">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="emergency_contact_phone_number" class="form-label">Emergency Contact Phone</label>
+                        <input id="emergency_contact_phone_number" class="form-control" type="tel" name="emergency_contact_phone_number" value="{{ user.emergency_contact_phone_number }}" required pattern="(?:\+64|0)[2-9][0-9]{7,9}" title="Enter a valid NZ number, for example 0212345678 or +64212345678" inputmode="tel" maxlength="20" placeholder="0212345678 or +64212345678">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="emergency_contact_relationship" class="form-label">Emergency Contact Relationship</label>
+                        <input id="emergency_contact_relationship" class="form-control" type="text" name="emergency_contact_relationship" value="{{ user.emergency_contact_relationship }}" required maxlength="50">
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button class="btn btn-eco" type="submit">Save Profile</button>
+                        <a class="btn btn-outline-secondary" href="{{ dashboard_url }}">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="claimBadgeModal" tabindex="-1" aria-labelledby="claimBadgeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="claimBadgeModalLabel">Claim Physical Badge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="claim-modal-note mb-3">Free postage within New Zealand.</p>
+                <form id="badgeClaimForm" action="{{ url_for('account_profile') }}" method="POST" novalidate>
+                    <input type="hidden" name="claim_action" value="claim_physical">
+                    <input type="hidden" name="claim_badge_id" id="claimBadgeId">
+                    <div class="mb-3">
+                        <label for="claimFullName" class="form-label">Full Name</label>
+                        <input id="claimFullName" name="claim_full_name" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">Full Name is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimStreetAddress" class="form-label">Street Address</label>
+                        <input id="claimStreetAddress" name="claim_street_address" class="form-control" type="text" required maxlength="150">
+                        <div class="invalid-feedback">Street Address is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimSuburb" class="form-label">Suburb</label>
+                        <input id="claimSuburb" name="claim_suburb" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">Suburb is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimCity" class="form-label">City</label>
+                        <input id="claimCity" name="claim_city" class="form-control" type="text" required maxlength="100">
+                        <div class="invalid-feedback">City is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="claimPostcode" class="form-label">Postcode</label>
+                        <input id="claimPostcode" name="claim_postcode" class="form-control" type="text" inputmode="numeric" pattern="\d{4}" maxlength="4" required>
+                        <div class="invalid-feedback">Please enter a valid 4-digit NZ postcode.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-eco">Claim Physical</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const progressFill = document.querySelector(".progress-fill[data-progress-percent]");
+        if (progressFill) {
+            const raw = Number(progressFill.dataset.progressPercent || 0);
+            const clamped = Math.max(0, Math.min(100, raw));
+            progressFill.style.width = `${clamped}%`;
+        }
+
+        const email = document.getElementById("email");
+        const form = email.closest("form");
+
+        function checkEmail() {
+            const val = email.value;
+            const hasAt = val.includes("@");
+            const hasDot = val.includes(".");
+            const restrictedChars = /[^a-zA-Z0-9@.]/.test(val);
+
+            if (val && (!hasAt || !hasDot || restrictedChars)) {
+                email.classList.add("is-invalid");
+                return false;
+            } else {
+                email.classList.remove("is-invalid");
+                return true;
+            }
+        }
+
+        email.addEventListener("keyup", checkEmail);
+
+        form.addEventListener("submit", function(event) {
+            if (!checkEmail()) {
+                event.preventDefault();
+                alert("Email address must contain @ and . and no other special characters.");
+            }
+        });
+
+        const claimModalEl = document.getElementById("claimBadgeModal");
+        const badgeClaimForm = document.getElementById("badgeClaimForm");
+        const claimBadgeIdInput = document.getElementById("claimBadgeId");
+        const claimFullName = document.getElementById("claimFullName");
+        const claimStreetAddress = document.getElementById("claimStreetAddress");
+        const claimSuburb = document.getElementById("claimSuburb");
+        const claimCity = document.getElementById("claimCity");
+        const claimPostcode = document.getElementById("claimPostcode");
+        const claimBadgeModal = new bootstrap.Modal(claimModalEl);
+
+        function clearClaimFormValidation() {
+            badgeClaimForm.classList.remove("was-validated");
+            [claimFullName, claimStreetAddress, claimSuburb, claimCity, claimPostcode].forEach(function(field) {
+                field.classList.remove("is-invalid");
+            });
+        }
+
+        function openClaimModal(badgeId, badgeName) {
+            claimBadgeIdInput.value = badgeId;
+            document.getElementById("claimBadgeModalLabel").textContent = `Claim Physical - ${badgeName}`;
+            badgeClaimForm.reset();
+            clearClaimFormValidation();
+            claimBadgeModal.show();
+        }
+
+        function attachClaimHandlers() {
+            document.querySelectorAll(".claim-physical-button").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    const badgeId = this.dataset.badgeId;
+                    const badgeName = this.dataset.badgeName;
+                    openClaimModal(badgeId, badgeName);
+                });
+            });
+
+            document.querySelectorAll(".badge-image[data-earned='true'][data-claimed='false']").forEach(function(image) {
+                image.addEventListener("click", function() {
+                    const article = this.closest(".badge-step");
+                    const badgeId = article.dataset.badgeId;
+                    const badgeName = article.dataset.badgeName;
+                    openClaimModal(badgeId, badgeName);
+                });
+
+                image.addEventListener("keydown", function(event) {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        const article = this.closest(".badge-step");
+                        const badgeId = article.dataset.badgeId;
+                        const badgeName = article.dataset.badgeName;
+                        openClaimModal(badgeId, badgeName);
+                    }
+                });
+            });
+        }
+
+        function validatePostcode() {
+            const value = claimPostcode.value.trim();
+            if (!/^\d{4}$/.test(value)) {
+                claimPostcode.classList.add("is-invalid");
+                return false;
+            }
+            claimPostcode.classList.remove("is-invalid");
+            return true;
+        }
+
+        attachClaimHandlers();
+
+        badgeClaimForm.addEventListener("submit", function(event) {
+            if (!badgeClaimForm.checkValidity() || !validatePostcode()) {
+                event.preventDefault();
+                badgeClaimForm.classList.add("was-validated");
+            }
+        });
+
+        claimModalEl.addEventListener("hidden.bs.modal", function() {
+            badgeClaimForm.reset();
+            clearClaimFormValidation();
+        });
+    });
+</script>
+{% endblock %}

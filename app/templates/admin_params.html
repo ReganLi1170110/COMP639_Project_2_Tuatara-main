@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{% if is_sa %}System{% else %}Control{% endif %} Parameters | Predator Monitoring{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="admin-hero rounded-4 p-4 mb-4 d-flex align-items-center gap-3">
+    <div>
+        <p class="admin-kicker mb-1">{% if is_sa %}Super Admin{% else %}Admin{% endif %}</p>
+        <h1 class="admin-hero-copy mb-0">{% if is_sa %}System{% else %}Control{% endif %} Parameters</h1>
+        <p class="text-white-50 mb-0 mt-1" style="font-size:.95rem;">
+            Manage lookup values used {% if is_sa %}across all groups{% else %}throughout the system{% endif %}. {{ param_types | length }} manageable parameter type{{ 's' if param_types | length != 1 else '' }}.
+        </p>
+    </div>
+</div>
+
+<!-- Param Type Cards -->
+{% if param_types %}
+{% set hidden_param_labels = ['Knowledge Status', 'Current Update Status', 'Member Status', 'Group Status', 'Maturity Status', 'Line Types'] %}
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3">
+    {% for pt in param_types %}
+    {% set display = pt.param_type.replace('_', ' ').title() %}
+    {% if display not in hidden_param_labels %}
+    <div class="col">
+        <div class="card admin-params-card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <span class="admin-params-type-icon">
+                        {% if pt.param_type == 'bait' or pt.param_type == 'Bait_Types' %}🌿
+                        {% elif pt.param_type == 'species' or pt.param_type == 'Species' %}🐾
+                        {% elif pt.param_type == 'trap_type' or pt.param_type == 'Trap_Types' %}🪤
+                        {% elif pt.param_type == 'trap_status' or pt.param_type == 'Trap_Status' %}📋
+                        {% elif pt.param_type == 'trap_condition' %}🔧
+                        {% elif pt.param_type == 'maturity' %}🌱
+                        {% elif pt.param_type == 'rebaited' %}✅
+                        {% elif pt.param_type == 'Bait_Station_Types' %}🏗️
+                        {% else %}🏷️
+                        {% endif %}
+                    </span>
+                    {% if is_sa and pt.active_count is defined %}
+                        <span class="badge admin-params-count-badge">{{ pt.active_count }}/{{ pt.value_count }}</span>
+                    {% else %}
+                        <span class="badge admin-params-count-badge">{{ pt.value_count }} value{{ 's' if pt.value_count != 1 else '' }}</span>
+                    {% endif %}
+                </div>
+                <h5 class="admin-params-type-name mb-1">{{ display }}</h5>
+                <p class="text-muted small mb-3 flex-grow-1">{{ pt.param_type }}</p>
+                
+                <a href="{{ url_for('admin_params_detail', param_type=pt.param_type) }}"
+                    class="btn btn-sm admin-params-manage-btn w-100">
+                    Manage &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info rounded-3">No manageable parameter types found.</div>
+{% endif %}
+{% endblock %}

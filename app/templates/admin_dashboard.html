@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Coordinator Dashboard - ConservaTrack{% endblock %}
+
+{% block content %}
+
+{% if group_info %}
+<div class="card border-0 shadow-sm mb-4 admin-hero" style="color: white;">
+    <div class="card-body p-4">
+        <div class="row align-items-start g-4">
+            <div class="col-12 col-lg-7">
+                <p class="mb-1 text-uppercase fw-semibold" style="font-size:.8rem; opacity:.8; letter-spacing:.1em;">Your Group</p>
+                <h2 class="fw-bold mb-2" style="color:white;">{{ group_info.name }}</h2>
+                {% if group_info.description %}
+                <p class="mb-2" style="opacity:.9;">{{ group_info.description }}</p>
+                {% endif %}
+                <div class="d-flex gap-2 flex-wrap mt-3 align-items-center">
+                    {% if group_info.is_public %}
+                    <span class="badge" style="background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4); font-size:.8rem; padding:.4em .75em;">Public</span>
+                    {% else %}
+                    <span class="badge" style="background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4); font-size:.8rem; padding:.4em .75em;">Private</span>
+                    {% endif %}
+                    <span class="badge" style="background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4); font-size:.8rem; padding:.4em .75em;">
+                        {{ group_members | length }} active member{% if group_members | length != 1 %}s{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 col-lg-5">
+                <p class="mb-2 fw-semibold" style="opacity:.8; font-size:.85rem;">Group Members</p>
+                <div style="max-height:180px; overflow-y:auto;">
+                    {% for member in group_members %}
+                    <div class="d-flex justify-content-between align-items-center py-1 border-bottom" style="border-color:rgba(255,255,255,.2) !important;">
+                        <div>
+                            <span style="color:white; font-size:.9rem;">{{ member.full_name }}</span>
+                            <span class="ms-2" style="font-size:.75rem; opacity:.7;">{{ member.email }}</span>
+                        </div>
+                        <span class="badge" style="background:rgba(255,255,255,.15); color:white; font-size:.7rem;">
+                            {{ 'Group Coordinator' if member.role in ['Coordinator'] else member.role }}
+                        </span>
+                    </div>
+                    {% else %}
+                    <p style="opacity:.7; font-size:.85rem;">No active members yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hero Card -->
+<div class="card admin-hero border-0 shadow-sm overflow-hidden mb-4">
+    <div class="card-body p-4 p-lg-5">
+        <div class="row align-items-start g-4">
+            <div class="col-12 col-lg-7">
+                <p class="admin-kicker mb-2">Program Control Center</p>
+                <h1 class="display-6 fw-semibold mb-3">Coordinator Dashboard</h1>
+                <p class="admin-hero-copy mb-4">
+                    Welcome, {{ current_user.first_name }}. This overview tracks line coverage, operator activity,
+                    catches, and observations across the full predator monitoring program.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <a href="{{ url_for('lines') }}" class="btn btn-light btn-lg">Manage Lines</a>
+                    <a href="{{ url_for('users') }}" class="btn btn-outline-light btn-lg">Manage Users</a>
+                </div>
+            </div>
+            <div class="col-3 admin-callout mt-2">
+            <p class="small text-uppercase fw-semibold mb-2 admin-callout-label">Live Coverage</p>
+            <div class="admin-callout-metrics">
+                <div>
+                    <span class="admin-callout-value">{{ dashboard.summary.active_line_count }}</span>
+                    <span class="admin-callout-text">active lines</span>
+                </div>
+                <div>
+                    <span class="admin-callout-value">{{ dashboard.summary.total_operator_count }}</span>
+                    <span class="admin-callout-text">operators</span>
+                </div>
+                <div>
+                    <span class="admin-callout-value">{{ dashboard.summary.total_catch_count }}</span>
+                    <span class="admin-callout-text">total catches logged</span>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center">
+                        <span class="admin-callout-value">{{ ('$' + ('%.2f'|format(donation_summary.total_amount)) ) if donation_summary and donation_summary.total_amount is not none else '$0.00' }}</span>
+                        <a class="btn btn-sm btn-outline-light ms-2" href="{{ url_for('coordinator_donations') }}" target="_blank" rel="noopener">View History</a>
+                    </div>
+                    <span class="admin-callout-text">donations total</span>
+                </div>
+            </div>
+        </div>
+        </div>
+ 
+            <!-- Donations Card removed (history is available via View History) -->
+    </div>
+</div>
+
+<!-- Stats Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <div class="admin-stat-card text-center">
+                    <p class="admin-stat-label mb-2">Total Lines</p>
+                    <p class="admin-stat-value mb-0">{{ dashboard.summary.total_line_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="admin-stat-card text-center">
+                    <p class="admin-stat-label mb-2">Total Assets</p>
+                    <p class="admin-stat-value mb-0">{{ dashboard.summary.total_asset_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="admin-stat-card text-center">
+                    <p class="admin-stat-label mb-2">Total Catches</p>
+                    <p class="admin-stat-value mb-0">{{ dashboard.summary.total_catch_count }}</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="admin-stat-card text-center">
+                    <p class="admin-stat-label mb-2">Total Observations</p>
+                    <p class="admin-stat-value mb-0">{{ dashboard.summary.total_observation_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Lines Overview Card -->
+<div class="card admin-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h4 mb-1">All Lines Overview</h2>
+                <p class="text-muted mb-0">Coverage and field activity for each line.</p>
+            </div>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.lines_overview|length }} lines</span>
+        </div>
+
+        {% if dashboard.lines_overview %}
+        <div class="row g-3">
+            {% for line in dashboard.lines_overview %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <a href="{{ url_for('line_detail', line_id=line.line_id) }}" class="fw-semibold text-decoration-none">{{ line.line_name }}</a>
+                            {% if line.line_status == 'active' %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle text-uppercase">{{ line.line_status }}</span>
+                            {% elif line.line_status == 'inactive' %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle text-uppercase">{{ line.line_status }}</span>
+                            {% else %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle text-uppercase">{{ line.line_status }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted mb-1">{{ line.line_type }}</div>
+                        <div class="small">
+                            <span class="me-3">Operators: <strong>{{ line.operator_count }}</strong></span>
+                            <span class="me-3">Assets: <strong>{{ line.asset_count }}</strong></span>
+                        </div>
+                        <div class="small">
+                            <span class="me-3">Catches: <strong>{{ line.catch_count }}</strong></span>
+                            <span>Observations: <strong>{{ line.observation_count }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No lines available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Operator Activity Card -->
+<div class="card admin-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h2 class="h4 mb-1">Operator Activity</h2>
+                <p class="text-muted mb-0">Assigned lines and records by operator.</p>
+            </div>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.operators_overview|length }} operators</span>
+        </div>
+
+        {% if dashboard.operators_overview %}
+        <div class="row g-3">
+            {% for operator in dashboard.operators_overview %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <a href="{{ url_for('user_profile', user_id=operator.user_id) }}" class="fw-semibold text-decoration-none">{{ operator.first_name }} {{ operator.last_name }}</a>
+                            {% if operator.account_status == 'Active' %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ operator.account_status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">{{ operator.account_status }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted">
+                            <span class="me-3">{{ operator.assigned_line_count }} lines</span>
+                            <span class="me-3">{{ operator.catch_count }} catches</span>
+                            <span>{{ operator.observation_count }} observations</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No operator activity available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Latest Catch Records Card -->
+<div class="card admin-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="h4 mb-0">Latest Catch Records</h2>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.recent_catches|length }} records</span>
+        </div>
+
+        {% if dashboard.recent_catches %}
+        <div class="row g-3">
+            {% for catch in dashboard.recent_catches %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">{{ catch.species_caught }}</span>
+                            <span class="badge rounded-pill text-bg-light">{{ catch.date.strftime('%d-%m-%Y') if catch.date else '-' }}</span>
+                        </div>
+                        <div class="mb-1">{{ catch.line_name }} &mdash; <span class="text-muted small">{{ catch.trap_code }}</span></div>
+                        <div class="small text-muted">{{ catch.status }} | Recorded by {{ catch.first_name }} {{ catch.last_name }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No catch records available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Latest Observations Card -->
+<div class="card admin-panel border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h2 class="h4 mb-0">Latest Observations</h2>
+            <span class="badge rounded-pill text-bg-light">{{ dashboard.recent_observations|length }} records</span>
+        </div>
+
+        {% if dashboard.recent_observations %}
+        <div class="row g-3">
+            {% for observation in dashboard.recent_observations %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">{{ observation.line_name or 'Unassigned line' }}</span>
+                            <span class="badge rounded-pill text-bg-light">{{ observation.date_recorded.strftime('%d-%m-%Y %H:%M:%S') if observation.date_recorded else '-' }}</span>
+                        </div>
+                        <div class="small text-muted mb-2">Recorded by {{ observation.first_name }} {{ observation.last_name }}</div>
+                        <p class="mb-0">{{ observation.notes or 'No observation notes recorded.' }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No observations available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+<!-- Donations Modal -->
+<!-- Donations Modal removed; history is shown in a separate popup route -->

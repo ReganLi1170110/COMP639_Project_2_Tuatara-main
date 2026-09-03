@@ -1,0 +1,108 @@
+.navbar .nav-link.current-menu-item,
+      .navbar .dropdown-item.current-menu-item,
+      .navbar .dropdown-toggle.current-menu-item,
+      #sidebar-nav .sidebar-link.current-menu-item,
+      #sidebar-footer .sidebar-link.current-menu-item {
+        font-weight: 700;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.28rem;
+      }
+
+      .navbar .nav-link.current-menu-item,
+      .navbar .dropdown-toggle.current-menu-item {
+        position: relative;
+      }
+
+      .navbar .nav-link.current-menu-item::after,
+      .navbar .dropdown-toggle.current-menu-item::after {
+              content: none;
+      }
+
+      .navbar .navbar-right-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-left: auto;
+      }
+
+      .navbar .navbar-right-actions .navbar-toggler {
+        margin-left: 0;
+      }
+
+      @media (max-width: 1199.98px) {
+        .navbar .container {
+          position: relative;
+          min-height: 3.5rem;
+        }
+
+        .navbar #main-nav-menu.navbar-collapse {
+          position: absolute;
+          top: calc(100% + 0.35rem);
+          right: 0;
+          left: auto;
+          width: min(22rem, calc(100% - 0.75rem));
+          margin-top: 0;
+          padding: 0.6rem 0.8rem;
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          border-radius: 0.65rem;
+          background: rgba(0, 0, 0, 0.84);
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+          z-index: 1080;
+        }
+
+        .navbar #main-nav-menu .navbar-nav {
+          width: 100%;
+        }
+
+        .navbar #main-nav-menu .nav-link {
+          padding-left: 0;
+          padding-right: 0;
+        }
+
+        .navbar .navbar-right-actions {
+          position: absolute;
+          top: 50%;
+          right: 0.75rem;
+          transform: translateY(-50%);
+          z-index: 1090;
+          margin-left: 0;
+        }
+
+        .navbar .navbar-account {
+          margin: 0;
+          position: static;
+          transform: none;
+          flex-direction: row;
+        }
+
+        .navbar .navbar-account .dropdown {
+          position: relative;
+        }
+
+        .navbar .navbar-account .nav-link {
+          white-space: nowrap;
+          padding-top: 0.35rem;
+          padding-bottom: 0.35rem;
+        }
+
+        /* Keep account submenu inside small screens */
+        .navbar .navbar-account .dropdown-menu,
+        .navbar .navbar-account .dropdown-menu.dropdown-menu-end {
+          position: absolute;
+          top: calc(100% + 0.3rem);
+          right: 0 !important;
+          left: auto !important;
+          min-width: 13rem;
+          max-width: min(18rem, calc(100vw - 1rem));
+        }
+
+        .navbar .navbar-account .dropdown-item {
+          white-space: normal;
+        }
+
+        .navbar .nav-link.current-menu-item::after,
+        .navbar .dropdown-toggle.current-menu-item::after {
+          content: none;
+        }
+      }

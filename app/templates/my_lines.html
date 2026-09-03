@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}My Assigned Lines{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-theme-btn {
+        background-color: var(--theme-btn, #2e7d32) !important;
+        border-color: var(--theme-btn, #2e7d32) !important;
+        color: #ffffff !important;
+    }
+
+    .line-theme-btn:hover,
+    .line-theme-btn:focus {
+        filter: brightness(0.92);
+        color: #ffffff !important;
+    }
+
+    .line-theme-btn-outline {
+        background-color: transparent !important;
+        border-color: var(--theme-primary, #2e7d32) !important;
+        color: var(--theme-primary, #2e7d32) !important;
+    }
+
+    .line-theme-btn-outline:hover,
+    .line-theme-btn-outline:focus {
+        background-color: var(--theme-primary, #2e7d32) !important;
+        color: #ffffff !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="h3 mb-4">My Assigned Lines</h1>
+
+    {% if lines %}
+        <div class="row g-4">
+            {% for line in lines %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ line.name }}</h5>
+                                <span class="badge bg-success">{{ line.line_status|title }}</span>
+                            </div>
+                            <p class="card-text text-muted small mb-2">
+                                Line ID: {{ line.line_id }} | Type: {{ line.line_type }}
+                            </p>
+                            <div class="mb-3">
+                                <span class="badge bg-light text-dark border">
+                                    Assets: {{ line.asset_count }}
+                                </span>
+                            </div>
+                            <a href="{{ url_for('line_detail', line_id=line.line_id) }}" class="btn line-theme-btn-outline btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You are not assigned to any lines yet. Contact an administrator.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Activity - {{ station.code }}{% endblock %}
+
+{% block content %}
+<div class="admin-hero rounded-4 p-4 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <p class="admin-kicker mb-1">Station History</p>
+        <h1 class="admin-hero-copy mb-0">Bait Station: {{ station.code }}</h1>
+        <p class="text-white-50 mb-0 mt-1">Full activity and maintenance log.</p>
+    </div>
+    <a href="{{ url_for('line_detail', line_id=station.line_id) }}" class="btn btn-outline-light">Back to Line</a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Target Species</th>
+                        <th>Active Ingredient</th>
+                        <th>Formulation</th>
+                        <th>Concentration</th>
+                        <th>Bait Remaining</th>
+                        <th>Bait Removed</th>
+                        <th>Bait Added</th>
+                        <th>Recorded By</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record.date.strftime('%d-%m-%Y %H:%M:%S') if record.date else '-' }}</td>
+                        <td>{{ record.target_species or '-' }}</td>
+                        <td>{{ record.active_ingredient or '-' }}</td>
+                        <td>{{ record.formulation or '-' }}</td>
+                        <td>{{ record.concentration or '-' }}{% if record.concentration %}%{% endif %}</td>
+                        <td><span class="badge bg-light text-dark border">{{ record.bait_remaining }} Kg</span></td>
+                        <td><span class="badge bg-warning-subtle text-warning border">{{ record.bait_removed or 0 }} Kg</span></td>
+                        <td><span class="badge bg-success-subtle text-success border border-success-subtle">{{ record.bait_added }} Kg</span></td>
+                        <td>{{ record.first_name }} {{ record.last_name }}</td>
+                        <td><small class="text-muted">{{ record.notes or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted mb-0">No activity records found for this station.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

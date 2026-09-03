@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% set is_edit = mode == 'edit' %}
+{% block title %}{{ title or ('Edit Catch Record' if is_edit else 'Add Catch Record') }}{% endblock %}
+
+{% block content %}
+{% set species_value = request.form.get('species', catch.species_caught_id if catch else '') %}
+{% set status_value = request.form.get('status', catch.trap_status_id if catch else '') %}
+{% set sex_value = request.form.get('sex', catch.sex if catch else '') %}
+{% set maturity_value = request.form.get('maturity', catch.maturity if catch else '') %}
+{% set rebaited_value = request.form.get('rebaited', catch.rebaited if catch else '') %}
+{% set bait_type_value = request.form.get('bait_type', catch.bait_type_id if catch else '') %}
+{% set trap_condition_value = request.form.get('trap_condition', catch.trap_condition if catch else '') %}
+{% set strikes_value = request.form.get('strikes', catch.strikes if catch else '0') %}
+{% set notes_value = request.form.get('notes', catch.notes if catch and catch.notes else '') %}
+{% set current_date_value = request.form.get('date', date_value if date_value else now) %}
+
+<div class="container mt-4">
+    {% if is_edit %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Edit Catch Record</h1>
+            <p class="text-muted mb-0">Trap {{ catch.trap_code }} on {{ catch.line_name }}</p>
+        </div>
+        <a class="btn btn-outline-success" href="{{ url_for('trap_catches', trap_id=catch.trap_id) }}">Back to Trap</a>
+    </div>
+    {% else %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('lines') }}">Lines</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('line_detail', line_id=line_id) }}">Line {{ line_id }}</a></li>
+            <li class="breadcrumb-item active">Add Catch</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4">Add Catch Record for Trap #{{ trap_id }}</h2>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    {% if is_edit and not can_edit %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i> You are viewing this catch record in read-only mode. Only Operators can edit their own records.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% if is_edit %}
+                        <div class="mb-3">
+                            <label class="form-label">Trap</label>
+                            <p class="fw-semibold mb-0">{{ catch.trap_code }} ({{ catch.line_name }})</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="species" class="form-label">Species caught *</label>
+                                <select class="form-select" id="species" name="species" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">Choose...</option>
+                                    {% for sp in species_list %}
+                                    <option value="{{ sp.id }}" {% if species_value|string == sp.id|string %}selected{% endif %}>{{ sp.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="date" class="form-label">Date and time *</label>
+                                <input type="datetime-local" class="form-control" id="date" name="date" value="{{ current_date_value }}" max="{{ max_date_value if max_date_value else now }}" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Trap status *</label>
+                                <select class="form-select" id="status" name="status" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">Choose...</option>
+                                    {% for st in status_list %}
+                                    <option value="{{ st.id }}" {% if status_value|string == st.id|string %}selected{% endif %}>{{ st.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="sex" class="form-label">Sex *</label>
+                                <select class="form-select" id="sex" name="sex" {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">-- Optional --</option>
+                                    {% for sx in sex_list %}
+                                    <option value="{{ sx }}" {% if sex_value == sx %}selected{% endif %}>{{ sx }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="maturity" class="form-label">Maturity</label>
+                                <select class="form-select" id="maturity" name="maturity" {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">-- Optional --</option>
+                                    {% for mat in maturity_list %}
+                                    <option value="{{ mat }}" {% if maturity_value == mat %}selected{% endif %}>{{ mat }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="rebaited" class="form-label">Rebaited? *</label>
+                                <select class="form-select" id="rebaited" name="rebaited" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    {% for rb in rebaited_list %}
+                                    <option value="{{ rb }}" {% if rebaited_value == rb %}selected{% endif %}>{{ rb }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="bait_type" class="form-label">Bait type *</label>
+                                <select class="form-select" id="bait_type" name="bait_type" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">Choose...</option>
+                                    {% for bt in bait_type_list %}
+                                    <option value="{{ bt.id }}" {% if bait_type_value|string == bt.id|string %}selected{% endif %}>{{ bt.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="trap_condition" class="form-label">Trap condition *</label>
+                                <select class="form-select" id="trap_condition" name="trap_condition" required {% if is_edit and not can_edit %}disabled{% endif %}>
+                                    <option value="">Choose...</option>
+                                    {% for tc in trap_condition_list %}
+                                    <option value="{{ tc }}" {% if trap_condition_value|string == tc|string %}selected{% endif %}>{{ tc }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="strikes" class="form-label">Strikes (number of animals caught)</label>
+                                <input type="number" class="form-control" id="strikes" name="strikes" min="0" value="{{ strikes_value }}" {% if is_edit and not can_edit %}disabled{% endif %}>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" maxlength="150" {% if is_edit and not can_edit %}disabled{% endif %}>{{ notes_value }}</textarea>
+                            </div>
+
+                            <div class="col-12">
+                                {% if not is_edit or can_edit %}
+                                <button type="submit" class="btn btn-primary">{{ 'Save Changes' if is_edit else 'Save Record' }}</button>
+                                {% endif %}
+                                {% if is_edit %}
+                                <a href="{{ url_for('trap_catches', trap_id=catch.trap_id) }}" class="btn btn-secondary">Cancel</a>
+                                {% else %}
+                                <a href="{{ url_for('line_detail', line_id=line_id) }}" class="btn btn-secondary">Cancel</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

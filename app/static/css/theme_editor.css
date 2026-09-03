@@ -1,0 +1,131 @@
+/* ── Two-column editor layout ─────────────────────────────── */
+.theme-editor-wrap {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .theme-editor-wrap { grid-template-columns: 1fr; }
+}
+
+/* ── Sticky preview panel ─────────────────────────────────── */
+.preview-sticky {
+  position: sticky;
+  top: 76px;
+}
+
+/* ── Preview frame ────────────────────────────────────────── */
+#preview-frame {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #d0d0d0;
+  box-shadow: 0 4px 20px rgba(0,0,0,.10);
+  background: #f5f5f5;
+}
+#preview-inner {
+  min-height: 460px;
+  position: relative;
+}
+/* Font is injected via #pv-font-style <style> tag by JS */
+/* bg image inside preview */
+#preview-bg {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-size: cover; background-position: center; opacity: .13;
+}
+#preview-content { position: relative; z-index: 1; }
+
+/* ── Preview components ───────────────────────────────────── */
+.pv-nav {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .55rem 1rem;
+}
+.pv-brand { font-weight: 700; font-size: .95rem; color: white; }
+.pv-links span { color: rgba(255,255,255,.85); font-size: .78rem; margin-left: .6rem; }
+
+.pv-banner { width: 100%; max-height: 72px; overflow: hidden; line-height: 0; }
+.pv-banner img { width: 100%; max-height: 72px; object-fit: cover; display: block; }
+
+.pv-body { padding: 1rem; }
+.pv-hero {
+  border-radius: 10px; padding: 1rem 1.1rem;
+  margin-bottom: .85rem; color: white;
+}
+.pv-hero-title { font-weight: 700; font-size: .97rem; margin-bottom: .2rem; }
+.pv-hero-sub   { font-size: .78rem; opacity: .85; margin-bottom: .6rem; }
+.pv-btn {
+  display: inline-block; padding: .25rem .75rem;
+  border-radius: 6px; font-size: .77rem; font-weight: 600; color: white;
+}
+.pv-card {
+  background: white; border-radius: 9px;
+  padding: .65rem .85rem; margin-bottom: .6rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.pv-card-title { font-weight: 600; font-size: .85rem; margin-bottom: .15rem; }
+.pv-card-sub   { font-size: .74rem; opacity: .6; }
+
+/* GRID layout preview */
+.pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.pv-grid-item { text-align: center; }
+.pv-grid-val { font-weight: 700; font-size: 1rem; }
+
+/* SIDEBAR layout preview */
+.pv-sidebar-wrap { display: flex; gap: 0; min-height: 300px; }
+.pv-sidebar-nav {
+  width: 90px; flex-shrink: 0;
+  padding: .6rem .4rem;
+}
+.pv-sidebar-item {
+  color: rgba(255,255,255,.88); font-size: .72rem;
+  padding: .3rem .4rem; border-radius: 5px;
+  margin-bottom: .25rem; cursor: default;
+}
+.pv-sidebar-content { flex: 1; padding: .75rem; }
+
+/* ── Editor controls ──────────────────────────────────────── */
+.editor-section {
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #888; margin: 1.4rem 0 .65rem;
+  border-bottom: 1px solid #eee; padding-bottom: .3rem;
+}
+
+.color-row { display: flex; align-items: center; gap: .55rem; }
+.color-row input[type=color] {
+  width: 42px; height: 34px; padding: 2px;
+  border: 1.5px solid #ddd; border-radius: 7px;
+  cursor: pointer; background: transparent;
+}
+.color-row input[type=text] {
+  width: 108px; font-family: monospace; font-size: .84rem;
+}
+
+.opt-pill {
+  border: 2px solid #dee2e6; border-radius: 8px;
+  padding: .45rem .75rem; cursor: pointer;
+  transition: border-color .13s, background .13s;
+  user-select: none;
+}
+.opt-pill:hover, .opt-pill.selected {
+  border-color: var(--theme-primary, #2e7d32);
+  background: #f0faf0;
+}
+.opt-pill .opt-label { font-weight: 600; font-size: .83rem; }
+.opt-pill .opt-sub   { font-size: .7rem; opacity: .6; margin-top: .1rem; }
+
+.img-upload-box {
+  border: 1.5px dashed #ccc; border-radius: 10px;
+  padding: .75rem; background: #fafafa; margin-bottom: .75rem;
+}
+.img-upload-box:hover { border-color: var(--theme-primary, #2e7d32); }
+.img-upload-box label { font-weight: 600; font-size: .84rem; display: block; margin-bottom: .4rem; }
+.img-thumb { max-height: 50px; border-radius: 5px; object-fit: cover; margin-bottom: .4rem; display: block; }
+.img-new-thumb { max-height: 50px; border-radius: 5px; object-fit: cover; margin-top: .4rem; display: block; }
+
+/* ── Layout label badge ───────────────────────────────────── */
+#preview-layout-badge {
+  position: absolute; top: .5rem; right: .5rem; z-index: 10;
+  background: rgba(0,0,0,.38); color: white;
+  font-size: .68rem; padding: .15rem .45rem; border-radius: 10px;
+}

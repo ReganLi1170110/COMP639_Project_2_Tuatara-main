@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Donate - ConservaTrack{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h1 class="mb-3">{% if group %}Support {{ group.name }}{% else %}Support ConservaTrack{% endif %}</h1>
+    {% if group and group.charitable_name %}
+    <p class="text-muted mb-2 no-highlight">{{ group.charitable_name }}</p>
+    {% endif %}
+    <style>
+      .no-highlight { background-color: transparent; }
+      .no-highlight::selection { background: transparent; }
+    </style>
+
+    <p class="lead" id="impact-description">{% if group and initial_impact_description %}{{ initial_impact_description }}{% else %}Donations support predator-control groups and the platform — funding trap lines, bait stations, community engagement, and ongoing conservation operations.{% endif %}</p>
+
+    <form method="post" id="donation-form">
+
+      <div class="mb-3">
+        <label for="donation_type" class="form-label">Donation type</label>
+        <select id="donation_type" name="donation_type" class="form-select" required>
+          <option value="group" {% if donation_type == 'group' %}selected{% endif %}>Group</option>
+          <option value="platform" {% if donation_type == 'platform' %}selected{% endif %}>Platform</option>
+          <option value="general" {% if donation_type == 'general' %}selected{% endif %}>General</option>
+        </select>
+      </div>
+
+      <div class="mb-3" id="group-select-container">
+        <label for="group_id" class="form-label">Select Group (for Group donations)</label>
+        <select id="group_id" name="group_id" class="form-select">
+          <option value="">-- Choose a group --</option>
+          {% if public_groups %}
+            {% for g in public_groups %}
+              <option value="{{ g.group_id }}" {% if group and g.group_id == group.group_id %}selected{% endif %}>{{ g.name }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+        <div class="form-text">Choose the beneficiary group for a Group donation.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="amount" class="form-label">Donation amount</label>
+        <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required value="{{ amount or '' }}">
+      </div>
+
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="anonymous" name="anonymous" {% if anonymous %}checked{% endif %}>
+        <label class="form-check-label" for="anonymous">Donate anonymously</label>
+      </div>
+
+      <div class="mb-3">
+        <label for="donor_name" class="form-label">Donor name (optional)</label>
+        <input type="text" class="form-control" id="donor_name" name="donor_name" value="{{ donor_name or '' }}">
+        <div class="form-text">Required for tax-receipted donations.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="contact_email" class="form-label">Contact email (optional)</label>
+        <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ contact_email or '' }}">
+        <div class="form-text">We use this to deliver a receipt (if requested).</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="message" class="form-label">Message (optional)</label>
+        <textarea class="form-control" id="message" name="message" rows="3">{{ message or '' }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Donate</button>
+    </form>
+
+    <script>
+      (function(){
+        const anon = document.getElementById('anonymous');
+        const nameInput = document.getElementById('donor_name');
+        const donationType = document.getElementById('donation_type');
+        const groupContainer = document.getElementById('group-select-container');
+        const groupSelect = document.getElementById('group_id');
+        const impactDescElement = document.getElementById('impact-description');
+        const defaultDesc = "Donations support predator-control groups and the platform — funding trap lines, bait stations, community engagement, and ongoing conservation operations.";
+        const impactDescriptions = {{ impact_descriptions | tojson | safe }};
+
+        function toggleName(){
+          if(anon.checked){
+            nameInput.disabled = true;
+            nameInput.value = '';
+          } else {
+            nameInput.disabled = false;
+          }
+        }
+        function toggleGroupSelector(){
+          if(donationType.value === 'group'){
+            groupContainer.style.display = '';
+            groupSelect.required = true;
+          } else {
+            groupContainer.style.display = 'none';
+            groupSelect.required = false;
+            groupSelect.value = '';
+          }
+        }
+        function updateImpactDescription() {
+          if (donationType.value === 'group') {
+            const selectedGroupId = groupSelect.value;
+            if (selectedGroupId && impactDescriptions[selectedGroupId]) {
+              impactDescElement.textContent = impactDescriptions[selectedGroupId];
+              return;
+            }
+          }
+          impactDescElement.textContent = defaultDesc;
+        }
+
+        anon.addEventListener('change', toggleName);
+        donationType.addEventListener('change', toggleGroupSelector);
+        donationType.addEventListener('change', updateImpactDescription);
+        groupSelect.addEventListener('change', updateImpactDescription);
+
+        toggleName();
+        toggleGroupSelector();
+        updateImpactDescription();
+      })();
+    </script>
+  </div>
+</div>
+{% endblock %}

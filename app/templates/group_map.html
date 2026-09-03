@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Operations Map{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<style>
+  #operations-map {
+    height: 72vh;
+    min-height: 480px;
+    border-radius: 12px;
+    border: 1px solid var(--theme-primary, #d8e5d8);
+    background: var(--theme-bg, #fff);
+  }
+
+  #map-action-menu {
+    position: absolute;
+    z-index: 1200;
+    display: none;
+    background: var(--theme-bg, #fff);
+    border: 1px solid var(--theme-primary, #dbe9db);
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+
+  #map-action-menu button {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0.55rem 0.85rem;
+    text-align: left;
+    font-size: 0.92rem;
+    color: var(--theme-primary, #2e7d32);
+  }
+
+  #map-action-menu button:hover {
+    background: var(--theme-accent, #f2f9f2);
+  }
+
+  /* Modal theme */
+  .modal-content {
+    background: var(--theme-bg, #fff);
+    border-radius: 12px;
+    border: 1px solid var(--theme-primary, #dbe9db);
+  }
+  .modal-header, .modal-footer {
+    background: var(--theme-bg, #f7fbf7);
+    border-bottom: 1px solid var(--theme-primary, #dbe9db);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  .modal-title {
+    color: var(--theme-primary, #2e7d32);
+  }
+  .form-label {
+    color: var(--theme-primary, #2e7d32);
+  }
+  .btn-success {
+    background-color: var(--theme-btn, #388e3c) !important;
+    border: none;
+    color: #ffffff !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Operations Map</h1>
+    <p class="text-muted mb-0">Click a marker for details. Double-click on map to add a Trap or Bait Station.</p>
+  </div>
+  {% if can_edit %}
+  <button class="btn btn-primary" id="save-area-btn" type="button">Save Operational Area</button>
+  {% endif %}
+</div>
+
+<div id="map-feedback" class="alert d-none" role="alert"></div>
+
+<div class="position-relative">
+  <div id="operations-map"></div>
+  <div id="map-action-menu">
+    <button type="button" data-kind="trap">Add Trap Here</button>
+    <button type="button" data-kind="bait_station">Add Bait Station Here</button>
+  </div>
+</div>
+
+<div class="modal fade" id="markerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="marker-form">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="markerModalTitle">Add Marker</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="marker-id" name="id">
+          <input type="hidden" id="marker-kind" name="kind">
+          <input type="hidden" id="marker-status" name="status">
+          <div class="mb-3">
+            <label class="form-label" for="marker-code">Code</label>
+            <input class="form-control" id="marker-code" name="code" maxlength="50" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="marker-line">Line</label>
+            <select class="form-select" id="marker-line" name="line_id" required></select>
+          </div>
+
+          <div id="trap-type-wrap" class="mb-3 d-none">
+            <label class="form-label" for="trap-type-id">Trap Type</label>
+            <select class="form-select" id="trap-type-id" name="trap_type_id"></select>
+          </div>
+
+          <div id="station-type-wrap" class="mb-3 d-none">
+            <label class="form-label" for="station-type-id">Bait Station Type</label>
+            <select class="form-select" id="station-type-id" name="bait_station_type_id"></select>
+          </div>
+
+          <div id="other-details-wrap" class="mb-3 d-none">
+            <label class="form-label" for="other-type-details">Other Type Details</label>
+            <input class="form-control" id="other-type-details" name="other_type_details" maxlength="255">
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label" for="marker-latitude">Latitude</label>
+              <input class="form-control" id="marker-latitude" name="latitude" readonly required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" for="marker-longitude">Longitude</label>
+              <input class="form-control" id="marker-longitude" name="longitude" readonly required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script>
+  window.groupMapConfig = {
+    canEdit: {{ 'true' if can_edit else 'false' }},
+    dataUrl: "{{ url_for('map_data_api') }}",
+    saveAreaUrl: "{{ url_for('save_operational_area_api') }}",
+    createMarkerUrl: "{{ url_for('create_map_marker_api') }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/group_map.js') }}"></script>
+{% endblock %}
